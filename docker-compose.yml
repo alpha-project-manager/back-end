@@ -1,0 +1,39 @@
+﻿services:
+  projects-postgres:
+    image: postgres:18
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: alphaProjects
+    ports:
+      - "5434:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - projects-network
+
+  WebApi:
+    image: alpha-project-manager-api
+    build:
+      context: .
+      dockerfile: AlphaProjectManager/Dockerfile
+    restart: always
+    depends_on:
+      - projects-postgres
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=projects-postgres;Port=5432;Database=alphaProjects;Username=postgres;Password=postgres
+      - ASPNETCORE_URLS=http://+:8080;
+    ports:
+      - "8080:8080"
+    networks:
+      - projects-network
+    volumes:
+      - ./publish/apiServer:/app/publish
+
+networks:
+  projects-network:
+    driver: bridge
+
+volumes:
+  dbdata:

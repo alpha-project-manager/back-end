@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure;
@@ -24,5 +25,11 @@ public class ProjectManagerDbContext : DbContext
     {
         optionsBuilder.UseSnakeCaseNamingConvention();
         optionsBuilder.UseNpgsql(_connectionString);
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<StudentInProject>()
+            .HasKey(nameof(StudentInProject.StudentId), nameof(StudentInProject.ProjectId));
     }
 }

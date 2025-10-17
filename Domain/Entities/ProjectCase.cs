@@ -25,5 +25,7 @@ public class ProjectCase : IHasId
     
     public required int MaxTeams { get; set; }
     
+    public required int AcceptedTeams { get; set; }
+    
     public required bool IsActive { get; set; }
 }

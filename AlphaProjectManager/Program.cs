@@ -1,10 +1,20 @@
 using System.Reflection;
 using Application;
+using Application.Services.TelegramBot;
 using Infrastructure;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -15,9 +25,10 @@ builder.Services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
 });
-builder.Services.AddSerilog();
 
-builder.Services.TryAddApplicationLayer();
+builder.Services.TryAddApplicationLayer(builder.Configuration);
+builder.Services.AddHostedService<TelegramBotBackgroundService>();
+
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
@@ -32,6 +43,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// await InfrastructureStartup.CheckAndMigrateDatabaseAsync(app.Services);
+await InfrastructureStartup.CheckAndMigrateDatabaseAsync(app.Services);
 
+app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 app.Run();

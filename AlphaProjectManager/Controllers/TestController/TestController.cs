@@ -9,13 +9,6 @@ namespace AlphaProjectManager.Controllers.TestController;
 [Route("test")]
 public class TestController : ControllerBase
 {
-    private List<Project> _projects =
-    [
-        new Project { Id = Guid.NewGuid(), Title = "Проект 1" },
-        new Project { Id = Guid.NewGuid(), Title = "Проект 2" },
-        new Project { Id = Guid.NewGuid(), Title = "Проект 3" },
-    ];
-    
     public TestController()
     {
         
@@ -32,7 +25,7 @@ public class TestController : ControllerBase
         {
             Completed = true,
             Message = "",
-            Projects = _projects.Select(p => p.Title).ToList()
+            Projects = []
         });
     }
 }

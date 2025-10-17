@@ -2,8 +2,9 @@
 
 public enum ApplicationStatus
 {
-    New = 0,
-    MeetPlanned = 1,
-    Accepted = 2,
-    Rejected = 3
+    InProgress = 0,
+    New = 1,
+    MeetPlanned = 2,
+    Accepted = 3,
+    Rejected = 4
 }

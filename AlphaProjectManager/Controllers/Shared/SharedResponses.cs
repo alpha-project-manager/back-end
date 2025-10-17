@@ -1,7 +1,7 @@
 ﻿using AlphaProjectManager.Controllers.Base.Responses;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AlphaProjectManager.Controllers.SharedResponses;
+namespace AlphaProjectManager.Controllers.Shared;
 
 public static class SharedResponses
 {

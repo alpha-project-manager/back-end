@@ -12,9 +12,11 @@ public class ApplicationMessage : IHasId
     
     public required Guid ApplicationId { get; set; }
     [ForeignKey("ApplicationId")] 
-    public Application Application { get; set; } = null!;
+    public ProjectApplication ProjectApplication { get; set; } = null!;
 
     public required string Content { get; set; }
     
     public required ApplicationMsgDirection Direction { get; set; }
+    
+    public required long Timestamp { get; set; }
 }

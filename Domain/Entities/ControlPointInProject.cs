@@ -28,4 +28,6 @@ public class ControlPointInProject : IHasId
     public required bool Completed { get; set; }
     
     public required DateTime Date { get; set; }
+    
+    public required bool HasMarkInTeamPro { get; set; }
 }

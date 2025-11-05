@@ -274,7 +274,8 @@ namespace Infrastructure.Migrations
                     company_mark = table.Column<int>(type: "integer", nullable: false),
                     urfu_mark = table.Column<int>(type: "integer", nullable: false),
                     completed = table.Column<bool>(type: "boolean", nullable: false),
-                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    has_mark_in_team_pro = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {

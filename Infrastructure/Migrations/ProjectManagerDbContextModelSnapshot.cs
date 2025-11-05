@@ -126,6 +126,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
 
+                    b.Property<bool>("HasMarkInTeamPro")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_mark_in_team_pro");
+
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")
                         .HasColumnName("project_id");

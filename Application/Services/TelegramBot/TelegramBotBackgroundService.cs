@@ -285,7 +285,7 @@ public partial class TelegramBotBackgroundService : BackgroundService
     private async Task SendThanksFinishedApplicationAsync(ProjectApplication application)
     {
         await _botClient.SendMessage(application.ChatId,
-            "Спасибо! Ваша заявка принята в обработку. Все дальнейшие сообщения, направленные боту, будут переданы кураторам. Сообщения от кураторов также будут направлены вам через данный бот.");
+            "Спасибо! Ваша заявка принята в обработку. Все дальнейшие сообщения, направленные боту, будут переданы кураторам. Сообщения от кураторов также будут направлены вам через данного бота.");
     }
     
     private async Task SendMsgForFinishedApplicationAsync(ProjectApplication application, Message message)

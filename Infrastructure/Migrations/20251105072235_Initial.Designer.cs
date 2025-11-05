@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251017110900_Initial")]
+    [Migration("20251105072235_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -128,6 +128,10 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
+
+                    b.Property<bool>("HasMarkInTeamPro")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_mark_in_team_pro");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")

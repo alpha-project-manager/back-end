@@ -15,6 +15,8 @@ public class Student : IHasId
     
     public string? Patronymic { get; set; } = "";
     
+    public string FullName { get; private set; } = "";
+    
     public string? AcademicGroup { get; set; } = "";
     
     public Guid? RoleId { get; set; }

@@ -57,6 +57,7 @@ public class ApplicationController : ControllerBase
     /// </summary>
     [HttpGet($"{{{nameof(applicationId)}:guid}}")]
     [ProducesResponseType(typeof(ApplicationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetApplicationById([FromRoute] Guid applicationId)
     {
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
@@ -91,6 +92,8 @@ public class ApplicationController : ControllerBase
     /// </summary>
     [HttpDelete($"{{{nameof(applicationId)}:guid}}")]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteApplicationById([FromRoute] Guid applicationId)
     {
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
@@ -123,6 +126,7 @@ public class ApplicationController : ControllerBase
     /// </summary>
     [HttpPost($"{{{nameof(applicationId)}:guid}}/send-message")]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SendMessageForApplication([FromRoute] Guid applicationId, [FromBody] SendMessageRequest dto)
     {
         var application = await _applicationService.GetByIdOrDefaultAsync(applicationId);

@@ -97,6 +97,7 @@ namespace Infrastructure.Migrations
                     first_name = table.Column<string>(type: "text", nullable: false),
                     last_name = table.Column<string>(type: "text", nullable: false),
                     patronymic = table.Column<string>(type: "text", nullable: true),
+                    full_name = table.Column<string>(type: "text", nullable: false, computedColumnSql: "LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))", stored: true),
                     academic_group = table.Column<string>(type: "text", nullable: true),
                     role_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },

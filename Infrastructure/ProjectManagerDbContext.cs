@@ -42,4 +42,16 @@ public class ProjectManagerDbContext : DbContext
         optionsBuilder.UseSnakeCaseNamingConvention();
         optionsBuilder.UseNpgsql(_connectionString);
     }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // modelBuilder.HasCollation("ru_ci", locale: "ru-u-ks-primary", provider: "icu", deterministic: false);
+        
+        modelBuilder.Entity<Student>()
+            .Property(s => s.FullName)
+            .HasComputedColumnSql(
+                "LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || " +
+                "CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))",
+                stored: true);
+    }
 }

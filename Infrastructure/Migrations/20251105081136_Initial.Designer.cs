@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251105072235_Initial")]
+    [Migration("20251105081136_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -44,6 +44,10 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Direction")
                         .HasColumnType("integer")
                         .HasColumnName("direction");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
 
                     b.Property<long>("Timestamp")
                         .HasColumnType("bigint")
@@ -82,6 +86,37 @@ namespace Infrastructure.Migrations
                         .HasName("pk_calendar_settings");
 
                     b.ToTable("calendar_settings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CaseVote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("case_id");
+
+                    b.Property<int>("ReactionType")
+                        .HasColumnType("integer")
+                        .HasColumnName("reaction_type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_case_votes");
+
+                    b.HasIndex("CaseId")
+                        .HasDatabaseName("ix_case_votes_case_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_case_votes_user_id");
+
+                    b.ToTable("case_votes", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ControlPoint", b =>
@@ -398,6 +433,37 @@ namespace Infrastructure.Migrations
                     b.ToTable("students", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.StudentAttendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Attended")
+                        .HasColumnType("boolean")
+                        .HasColumnName("attended");
+
+                    b.Property<Guid>("MeetingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meeting_id");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_student_attendances");
+
+                    b.HasIndex("MeetingId")
+                        .HasDatabaseName("ix_student_attendances_meeting_id");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_student_attendances_student_id");
+
+                    b.ToTable("student_attendances", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.StudentInProject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -565,6 +631,37 @@ namespace Infrastructure.Migrations
                     b.ToTable("tutors", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.TutorAttendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Attended")
+                        .HasColumnType("boolean")
+                        .HasColumnName("attended");
+
+                    b.Property<Guid>("MeetingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("meeting_id");
+
+                    b.Property<Guid>("TutorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tutor_attendances");
+
+                    b.HasIndex("MeetingId")
+                        .HasDatabaseName("ix_tutor_attendances_meeting_id");
+
+                    b.HasIndex("TutorId")
+                        .HasDatabaseName("ix_tutor_attendances_tutor_id");
+
+                    b.ToTable("tutor_attendances", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -617,6 +714,27 @@ namespace Infrastructure.Migrations
                         .HasConstraintName("fk_application_messages_project_applications_application_id");
 
                     b.Navigation("ProjectApplication");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CaseVote", b =>
+                {
+                    b.HasOne("Domain.Entities.ProjectCase", "Case")
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_case_votes_project_cases_case_id");
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_case_votes_users_user_id");
+
+                    b.Navigation("Case");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.ControlPointInProject", b =>
@@ -708,6 +826,27 @@ namespace Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("Domain.Entities.StudentAttendance", b =>
+                {
+                    b.HasOne("Domain.Entities.Meeting", "Meeting")
+                        .WithMany()
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_attendances_meetings_meeting_id");
+
+                    b.HasOne("Domain.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_student_attendances_students_student_id");
+
+                    b.Navigation("Meeting");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Domain.Entities.StudentInProject", b =>
                 {
                     b.HasOne("Domain.Entities.Project", "Project")
@@ -768,6 +907,27 @@ namespace Infrastructure.Migrations
                         .HasConstraintName("fk_todo_tasks_meetings_meeting_id");
 
                     b.Navigation("Meeting");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TutorAttendance", b =>
+                {
+                    b.HasOne("Domain.Entities.Meeting", "Meeting")
+                        .WithMany()
+                        .HasForeignKey("MeetingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_attendances_meetings_meeting_id");
+
+                    b.HasOne("Domain.Entities.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_attendances_tutors_tutor_id");
+
+                    b.Navigation("Meeting");
+
+                    b.Navigation("Tutor");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

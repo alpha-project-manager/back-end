@@ -1,8 +1,10 @@
 ﻿using Application.Services;
 using Application.Services.TelegramBot;
 using Application.Services.TelegramBot.Config;
+using Application.Services.TelegramBot.Notifier;
 using Domain.Entities;
 using Domain.Entities.TelegramBot;
+using Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -21,7 +23,8 @@ public static class ApplicationStartup
             var config = sp.GetRequiredService<IOptions<TelegramBotConfiguration>>().Value;
             return new TelegramBotClient(config.BotToken);
         });
-
+        services.AddSingleton<ITelegramNotifier, TelegramNotifier>();
+        
         services.AddBaseServicesForEntities();
         services.TryAddScoped<BaseService<ApplicationQuestion>>();
         services.TryAddScoped<BaseService<ApplicationQuestionAnswer>>();
@@ -36,8 +39,11 @@ public static class ApplicationStartup
 
         foreach (var entityType in entityTypes)
         {
-            var serviceType = typeof(BaseService<>).MakeGenericType(entityType);
-            services.TryAddScoped(serviceType);
+            if (entityType.GetInterfaces().Contains(typeof(IHasId)))
+            {
+                var serviceType = typeof(BaseService<>).MakeGenericType(entityType);
+                services.TryAddScoped(serviceType);
+            }
         }
 
         return services;

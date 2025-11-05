@@ -222,6 +222,32 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "case_votes",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    case_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    reaction_type = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_case_votes", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_case_votes_project_cases_case_id",
+                        column: x => x.case_id,
+                        principalTable: "project_cases",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_case_votes_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "application_messages",
                 columns: table => new
                 {
@@ -229,7 +255,8 @@ namespace Infrastructure.Migrations
                     application_id = table.Column<Guid>(type: "uuid", nullable: false),
                     content = table.Column<string>(type: "text", nullable: false),
                     direction = table.Column<int>(type: "integer", nullable: false),
-                    timestamp = table.Column<long>(type: "bigint", nullable: false)
+                    timestamp = table.Column<long>(type: "bigint", nullable: false),
+                    is_read = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -341,6 +368,32 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "student_attendances",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    meeting_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    student_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    attended = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_student_attendances", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_student_attendances_meetings_meeting_id",
+                        column: x => x.meeting_id,
+                        principalTable: "meetings",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_student_attendances_students_student_id",
+                        column: x => x.student_id,
+                        principalTable: "students",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "todo_tasks",
                 columns: table => new
                 {
@@ -356,6 +409,32 @@ namespace Infrastructure.Migrations
                         name: "fk_todo_tasks_meetings_meeting_id",
                         column: x => x.meeting_id,
                         principalTable: "meetings",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tutor_attendances",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    meeting_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    tutor_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    attended = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_tutor_attendances", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_tutor_attendances_meetings_meeting_id",
+                        column: x => x.meeting_id,
+                        principalTable: "meetings",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_tutor_attendances_tutors_tutor_id",
+                        column: x => x.tutor_id,
+                        principalTable: "tutors",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -379,6 +458,16 @@ namespace Infrastructure.Migrations
                 name: "ix_application_questions_prev_question_id",
                 table: "application_questions",
                 column: "prev_question_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_case_votes_case_id",
+                table: "case_votes",
+                column: "case_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_case_votes_user_id",
+                table: "case_votes",
+                column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_control_point_in_projects_control_point_id",
@@ -421,6 +510,16 @@ namespace Infrastructure.Migrations
                 column: "tutor_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_student_attendances_meeting_id",
+                table: "student_attendances",
+                column: "meeting_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_student_attendances_student_id",
+                table: "student_attendances",
+                column: "student_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_student_in_projects_project_id",
                 table: "student_in_projects",
                 column: "project_id");
@@ -439,6 +538,16 @@ namespace Infrastructure.Migrations
                 name: "ix_todo_tasks_meeting_id",
                 table: "todo_tasks",
                 column: "meeting_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_tutor_attendances_meeting_id",
+                table: "tutor_attendances",
+                column: "meeting_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_tutor_attendances_tutor_id",
+                table: "tutor_attendances",
+                column: "tutor_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_calendar_settings_id",
@@ -461,7 +570,13 @@ namespace Infrastructure.Migrations
                 name: "application_question_answers");
 
             migrationBuilder.DropTable(
+                name: "case_votes");
+
+            migrationBuilder.DropTable(
                 name: "control_point_in_projects");
+
+            migrationBuilder.DropTable(
+                name: "student_attendances");
 
             migrationBuilder.DropTable(
                 name: "student_in_projects");
@@ -470,10 +585,13 @@ namespace Infrastructure.Migrations
                 name: "todo_tasks");
 
             migrationBuilder.DropTable(
-                name: "users");
+                name: "tutor_attendances");
 
             migrationBuilder.DropTable(
                 name: "project_applications");
+
+            migrationBuilder.DropTable(
+                name: "users");
 
             migrationBuilder.DropTable(
                 name: "control_points");
@@ -485,10 +603,10 @@ namespace Infrastructure.Migrations
                 name: "meetings");
 
             migrationBuilder.DropTable(
-                name: "calendar_settings");
+                name: "application_questions");
 
             migrationBuilder.DropTable(
-                name: "application_questions");
+                name: "calendar_settings");
 
             migrationBuilder.DropTable(
                 name: "student_roles");

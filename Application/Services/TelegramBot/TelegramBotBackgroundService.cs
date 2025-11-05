@@ -1,6 +1,4 @@
-﻿using Application.DataQuery;
-using Application.Utils;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Domain.Entities.TelegramBot;
 using Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +17,6 @@ public partial class TelegramBotBackgroundService : BackgroundService
     private readonly IServiceProvider _services;
     private ITelegramBotClient _botClient;
     private readonly ILogger<TelegramBotBackgroundService> _logger;
-    private List<long> _pendingProjectCaseSelect = [];
     
     public TelegramBotBackgroundService(
         ITelegramBotClient botClient, ILogger<TelegramBotBackgroundService> logger, IServiceProvider services)
@@ -36,14 +33,16 @@ public partial class TelegramBotBackgroundService : BackgroundService
         var me = await _botClient.GetMe(stoppingToken);
         _logger.LogInformation("Бот {username} успешно инициализирован.", me.Username);
 
-        _botClient.StartReceiving(
-            HandleUpdateAsync,
-            HandleErrorAsync,
-            new ReceiverOptions { AllowedUpdates = [] },
-            cancellationToken: stoppingToken
-        );
+        var options = new ReceiverOptions { AllowedUpdates = [] };
 
-        await Task.Delay(Timeout.Infinite, stoppingToken);
+        try
+        {
+            await _botClient.ReceiveAsync(HandleUpdateAsync, HandleErrorAsync, options, stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Остановка Telegram бота по токену отмены.");
+        }
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken cancellationToken)
@@ -301,21 +300,15 @@ public partial class TelegramBotBackgroundService : BackgroundService
 
     private string GetTextForExistingApplication(ProjectApplication application)
     {
-        var text = "У вас уже есть заявка на проект. ";
-        switch (application.Status)
+        const string text = "У вас уже есть заявка на проект. ";
+        return application.Status switch
         {
-            case ApplicationStatus.InProgress:
-                return text + "Введите ответ на вопрос выше для продолжения регистрации заявки.";
-            case ApplicationStatus.New:
-                return text + "Ожидайте ответ от куратора.";
-            case ApplicationStatus.Accepted:
-                return text + "Ваша заявка принята, ожидайте инструкции от куратора.";
-            case ApplicationStatus.MeetPlanned:
-                return text + "Ваша заявка на рассмотрении, ожидайте инструкции от куратора.";
-            case ApplicationStatus.Rejected:
-                return text + "К сожалению, ваша заявка отклонена.";
-            default:
-                return text;
-        }
+            ApplicationStatus.InProgress => text + "Введите ответ на вопрос выше для продолжения регистрации заявки.",
+            ApplicationStatus.New => text + "Ожидайте ответ от куратора.",
+            ApplicationStatus.Accepted => text + "Ваша заявка принята, ожидайте инструкции от куратора.",
+            ApplicationStatus.MeetPlanned => text + "Ваша заявка на рассмотрении, ожидайте инструкции от куратора.",
+            ApplicationStatus.Rejected => text + "К сожалению, ваша заявка отклонена.",
+            _ => text
+        };
     }
 }

@@ -136,7 +136,8 @@ public partial class TelegramBotBackgroundService
             ApplicationId = application.Id,
             Content = msg.Text!,
             Direction = ApplicationMsgDirection.FromStudents,
-            Timestamp = msg.Date.ConvertToTimestamp()
+            Timestamp = msg.Date.ConvertToTimestamp(),
+            IsRead = false
         };
         await messageService.CreateAsync(message);
     }

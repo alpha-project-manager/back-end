@@ -19,4 +19,6 @@ public class ApplicationMessage : IHasId
     public required ApplicationMsgDirection Direction { get; set; }
     
     public required long Timestamp { get; set; }
+    
+    public required bool IsRead { get; set; }
 }

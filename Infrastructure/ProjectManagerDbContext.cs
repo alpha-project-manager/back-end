@@ -24,6 +24,10 @@ public class ProjectManagerDbContext : DbContext
     public DbSet<Tutor> Tutors { get; init; }
     public DbSet<User> Users { get; init; }
     
+    public DbSet<CaseVote> CaseVotes { get; init; }
+    public DbSet<StudentAttendance> StudentAttendances { get; init; }
+    public DbSet<TutorAttendance> TutorAttendances { get; init; }
+    
     public DbSet<ApplicationQuestion> ApplicationQuestions { get; init; }
     public DbSet<ApplicationQuestionAnswer> ApplicationQuestionAnswers { get; init; }
     

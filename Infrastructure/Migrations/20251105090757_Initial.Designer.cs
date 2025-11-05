@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251105081136_Initial")]
+    [Migration("20251105090757_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -566,6 +566,10 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("question_title");
+
+                    b.Property<long>("TimeStamp")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time_stamp");
 
                     b.HasKey("Id")
                         .HasName("pk_application_question_answers");

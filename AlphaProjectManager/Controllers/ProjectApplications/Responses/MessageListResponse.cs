@@ -1,4 +1,4 @@
-﻿namespace AlphaProjectManager.Controllers.ApplicationMessages.Responses;
+﻿namespace AlphaProjectManager.Controllers.ProjectApplications.Responses;
 
 public class MessageListResponse
 {

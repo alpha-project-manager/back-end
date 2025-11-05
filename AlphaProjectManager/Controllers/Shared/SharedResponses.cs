@@ -5,6 +5,15 @@ namespace AlphaProjectManager.Controllers.Shared;
 
 public static class SharedResponses
 {
+    public static OkObjectResult SuccessRequest(string msg = "")
+    {
+        return new OkObjectResult(new BaseStatusResponse
+        {
+            Message = msg,
+            Completed = true
+        });
+    }
+    
     public static BadRequestObjectResult FailedRequest(string msg)
     {
         return new BadRequestObjectResult(new BaseStatusResponse

@@ -564,6 +564,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("question_title");
 
+                    b.Property<long>("TimeStamp")
+                        .HasColumnType("bigint")
+                        .HasColumnName("time_stamp");
+
                     b.HasKey("Id")
                         .HasName("pk_application_question_answers");
 

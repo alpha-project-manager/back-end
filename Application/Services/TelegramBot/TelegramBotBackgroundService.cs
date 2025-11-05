@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.Utils;
+using Domain.Entities;
 using Domain.Entities.TelegramBot;
 using Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -197,7 +198,8 @@ public partial class TelegramBotBackgroundService : BackgroundService
             Id = Guid.NewGuid(),
             ApplicationId = application.Id,
             QuestionTitle = questions.CurrentQuestion.Title,
-            Answer = message.Text!
+            Answer = message.Text!,
+            TimeStamp = message.Date.ConvertToTimestamp()
         };
         await answerService.CreateAsync(answer);
         application.CurrentQuestionId = questions.NextQuestion?.Id;

@@ -1,4 +1,4 @@
-﻿namespace AlphaProjectManager.Controllers.ApplicationMessages.Requests;
+﻿namespace AlphaProjectManager.Controllers.ProjectApplications.Requests;
 
 public class SendMessageRequest
 {

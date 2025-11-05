@@ -16,4 +16,6 @@ public class ApplicationQuestionAnswer : IHasId
     public required string QuestionTitle { get; set; }
     
     public required string Answer { get; set; }
+    
+    public required long TimeStamp { get; set; }
 }

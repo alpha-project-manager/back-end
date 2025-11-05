@@ -276,7 +276,8 @@ namespace Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     application_id = table.Column<Guid>(type: "uuid", nullable: false),
                     question_title = table.Column<string>(type: "text", nullable: false),
-                    answer = table.Column<string>(type: "text", nullable: false)
+                    answer = table.Column<string>(type: "text", nullable: false),
+                    time_stamp = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {

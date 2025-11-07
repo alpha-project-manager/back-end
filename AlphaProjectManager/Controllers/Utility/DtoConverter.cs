@@ -50,7 +50,7 @@ public static class DtoConverter
             RequestedResult = projectCase.RequestedResult,
             Criteria = projectCase.Criteria,
             TutorId = projectCase.TutorId,
-            TutorFio = projectCase.Tutor?.GetFio(),
+            TutorFio = projectCase.Tutor?.FullName,
             MaxTeams = projectCase.MaxTeams,
             AcceptedTeams = projectCase.AcceptedTeams,
             IsActive = projectCase.IsActive,
@@ -66,7 +66,7 @@ public static class DtoConverter
             Id = projectCase.Id,
             Title = projectCase.Title,
             TutorId = projectCase.TutorId,
-            TutorFio = projectCase.Tutor?.GetFio(),
+            TutorFio = projectCase.Tutor?.FullName,
             MaxTeams = projectCase.MaxTeams,
             AcceptedTeams = projectCase.AcceptedTeams,
             IsActive = projectCase.IsActive

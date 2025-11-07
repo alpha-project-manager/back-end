@@ -82,7 +82,8 @@ namespace Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     first_name = table.Column<string>(type: "text", nullable: false),
                     last_name = table.Column<string>(type: "text", nullable: true),
-                    patronymic = table.Column<string>(type: "text", nullable: true)
+                    patronymic = table.Column<string>(type: "text", nullable: true),
+                    full_name = table.Column<string>(type: "text", nullable: false, computedColumnSql: "LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))", stored: true)
                 },
                 constraints: table =>
                 {
@@ -198,6 +199,7 @@ namespace Infrastructure.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     case_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    team_title = table.Column<string>(type: "text", nullable: false),
                     title = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
                     tutor_id = table.Column<Guid>(type: "uuid", nullable: true),

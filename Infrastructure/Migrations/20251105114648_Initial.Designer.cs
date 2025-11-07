@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251105103234_Initial")]
+    [Migration("20251105114648_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -267,6 +267,11 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
+
+                    b.Property<string>("TeamTitle")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("team_title");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -627,6 +632,13 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("first_name");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("full_name")
+                        .HasComputedColumnSql("LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))", true);
 
                     b.Property<string>("LastName")
                         .HasColumnType("text")

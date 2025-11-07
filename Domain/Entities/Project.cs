@@ -14,6 +14,8 @@ public class Project : IHasId
     [ForeignKey("CaseId")] 
     public ProjectCase Case { get; set; } = null!;
     
+    public required string TeamTitle { get; set; }
+    
     public required string Title { get; set; }
 
     public string Description { get; set; } = "";

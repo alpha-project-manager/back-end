@@ -53,5 +53,11 @@ public class ProjectManagerDbContext : DbContext
                 "LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || " +
                 "CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))",
                 stored: true);
+        modelBuilder.Entity<Tutor>()
+            .Property(s => s.FullName)
+            .HasComputedColumnSql(
+                "LTRIM(RTRIM(COALESCE(\"last_name\", '') || ' ' || COALESCE(NULLIF(\"first_name\", ''), '') || " +
+                "CASE WHEN COALESCE(NULLIF(\"patronymic\", ''), '') = '' THEN '' ELSE ' ' || \"patronymic\" END))",
+                stored: true);
     }
 }

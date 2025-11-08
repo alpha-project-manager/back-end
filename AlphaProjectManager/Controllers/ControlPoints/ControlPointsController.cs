@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AlphaProjectManager.Controllers.ControlPoints;
 
-[Route("/api/control-points")]
+[Route("api/control-points")]
 public class ControlPointsController : ControllerBase
 {
     private readonly ControlPointService _controlPointService;

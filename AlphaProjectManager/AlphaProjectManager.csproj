@@ -37,6 +37,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Controllers\ControlPoints\Requests\" />
+      <Folder Include="Controllers\ControlPoints\Responses\" />
+      <Folder Include="Controllers\Projects\ControlPointsInPorject\Requests\" />
+      <Folder Include="Controllers\Projects\Meetings\Requests\" />
       <Folder Include="Controllers\TestController\Requests\" />
     </ItemGroup>
     

@@ -30,6 +30,9 @@ public static class ApplicationStartup
         services.TryAddScoped<BaseService<ApplicationQuestion>>();
         services.TryAddScoped<BaseService<ApplicationQuestionAnswer>>();
         services.TryAddScoped<TeamProProjectImporter>();
+        
+        services.TryAddScoped<ProjectsService>();
+        services.TryAddScoped<MeetingService>();
         return services;
     }
     

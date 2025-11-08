@@ -1,9 +1,13 @@
-﻿using AlphaProjectManager.Controllers.Projects.Requests;
+﻿using AlphaProjectManager.Controllers.Base.Responses;
+using AlphaProjectManager.Controllers.Projects.Requests;
 using AlphaProjectManager.Controllers.Projects.Responses;
+using AlphaProjectManager.Controllers.Shared;
 using AlphaProjectManager.Controllers.Students.Responses;
 using Application.DataQuery;
 using Application.Services;
+using Application.Utils;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,14 +16,14 @@ namespace AlphaProjectManager.Controllers.Projects;
 [Route("api/projects")]
 public class ProjectsController : ControllerBase
 {
-    private readonly BaseService<Project> _projectService;
+    private readonly ProjectsService _projectService;
     private readonly BaseService<StudentInProject> _studentsInProjectService;
-    private readonly BaseService<Meeting> _meetingService;
+    private readonly MeetingService _meetingService;
     private readonly BaseService<ControlPointInProject> _controlPointService;
     private readonly TeamProProjectImporter _teamProProjectImporter;
 
-    public ProjectsController(BaseService<Project> projectService, BaseService<StudentInProject> studentsInProjectService,
-        BaseService<Meeting> meetingService, BaseService<ControlPointInProject> controlPointService, TeamProProjectImporter teamProProjectImporter)
+    public ProjectsController(ProjectsService projectService, BaseService<StudentInProject> studentsInProjectService,
+        MeetingService meetingService, BaseService<ControlPointInProject> controlPointService, TeamProProjectImporter teamProProjectImporter)
     {
         _projectService = projectService;
         _studentsInProjectService = studentsInProjectService;
@@ -79,7 +83,7 @@ public class ProjectsController : ControllerBase
     /// </summary>
     [HttpPost("import-from-team-pro")]
     [ProducesResponseType(typeof(ImportProjectsResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProjectsBriefList([FromBody] ImportProjectsFromTeamProRequest dto)
+    public async Task<IActionResult> ImportProjectsFromTeamPro([FromBody] ImportProjectsFromTeamProRequest dto)
     {
         var result = await _teamProProjectImporter.ImportProjectsFromTeamPro(dto.Login, dto.Password);
         return Ok(new ImportProjectsResponse
@@ -88,6 +92,105 @@ public class ProjectsController : ControllerBase
             UpdatedProjects = result.UpdatedProjects.Select(ProjectBriefResponse.FromProject).ToList(),
             Completed = result.Completed,
             Message = result.Comment
+        });
+    }
+    
+    /// <summary>
+    /// Создать новый проект
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ProjectBriefResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CreateNewProject([FromBody] CreateNewProjectRequest dto)
+    {
+        var sem = CurrentSemesterHelper.GetCurrentSemester();
+        var project = new Project
+        {
+            Id = Guid.NewGuid(),
+            CaseId = dto.CaseId,
+            TeamTitle = "",
+            Title = dto.Title,
+            Description = "",
+            TutorId = null, // TODO: From Current User
+            MeetingUrl = "",
+            Status = ProjectStatus.Created,
+            Semester = sem.Semester,
+            AcademicYear = sem.Year
+        };
+        await _projectService.CreateAsync(project);
+        return Ok(ProjectBriefResponse.FromProject(project));
+    }
+    
+    /// <summary>
+    /// Удалить проект
+    /// </summary>
+    [HttpDelete("{projectId:guid}")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteProject([FromRoute] Guid projectId)
+    {
+        var result = await _projectService.DeleteProject(projectId);
+        if (!result.Completed)
+        {
+            return SharedResponses.FailedRequest(result.Comment);
+        }
+        return Ok(new BaseStatusResponse
+        {
+            Completed = true,
+            Message = result.Comment
+        });
+    }
+    
+    /// <summary>
+    /// Получить полную информацию о проекте
+    /// </summary>
+    [HttpGet("{projectId:guid}")]
+    [ProducesResponseType(typeof(ProjectFullResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetProjectFullInfo([FromRoute] Guid projectId)
+    {
+        var foundProjects  = await _projectService.GetAsync(new DataQueryParams<Project>
+        {
+            Expression = p => p.Id == projectId,
+            IncludeParams = new IncludeParams<Project> { IncludeProperties = [p => p.Tutor] }
+        });
+        if (foundProjects.Length == 0)
+        {
+            return SharedResponses.NotFoundObjectResponse<Project>(projectId);
+        }
+        var project = foundProjects[0];
+        
+        var controlPoints = await _controlPointService.GetAsync(new DataQueryParams<ControlPointInProject>
+        {
+            Expression = p => p.ProjectId == projectId
+        });
+        var students = (await _studentsInProjectService.GetAsync(new DataQueryParams<StudentInProject>
+        {
+            Expression = s => s.ProjectId == projectId,
+            IncludeParams = new IncludeParams<StudentInProject>() { IncludeProperties = [s => s.Student, s=> s.Student.Role] }
+        })).Select(s => s.Student).ToArray();
+        var meetingsDict = await _meetingService.GetMeetingsForProject(projectId);
+        
+        return Ok(ProjectFullResponse.FromDomainEntities(project, controlPoints, students, meetingsDict));
+    }
+    
+    /// <summary>
+    /// Обновить информацию о проекте
+    /// </summary>
+    [HttpPut("{projectId:guid}")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateProject([FromRoute] Guid projectId, [FromBody] UpdateProjectRequest dto)
+    {
+        var project = await _projectService.GetByIdOrDefaultAsync(projectId);
+        if (project == null)
+        {
+            return SharedResponses.NotFoundObjectResponse<Project>(projectId);
+        }
+        dto.ApplyToProject(project);
+        await _projectService.UpdateAsync(project);
+        return Ok(new BaseStatusResponse
+        {
+            Completed = true,
+            Message = ""
         });
     }
 }

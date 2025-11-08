@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
 
-namespace AlphaProjectManager.Controllers.Projects.ControlPointsInPorject.Responses;
+namespace AlphaProjectManager.Controllers.Projects.ControlPointsInProject.Responses;
 
 public class ControlPointProjectResponse
 {

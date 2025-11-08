@@ -1,4 +1,4 @@
-﻿using AlphaProjectManager.Controllers.Projects.ControlPointsInPorject.Responses;
+﻿using AlphaProjectManager.Controllers.Projects.ControlPointsInProject.Responses;
 using AlphaProjectManager.Controllers.Projects.Meetings.Responses;
 using AlphaProjectManager.Controllers.Students.Responses;
 using AlphaProjectManager.Controllers.Tutors.Responses;

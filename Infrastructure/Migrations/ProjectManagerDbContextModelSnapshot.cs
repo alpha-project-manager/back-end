@@ -243,7 +243,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("academic_year");
 
-                    b.Property<Guid>("CaseId")
+                    b.Property<Guid?>("CaseId")
                         .HasColumnType("uuid")
                         .HasColumnName("case_id");
 
@@ -793,8 +793,6 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.ProjectCase", "Case")
                         .WithMany()
                         .HasForeignKey("CaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_projects_project_cases_case_id");
 
                     b.HasOne("Domain.Entities.Tutor", "Tutor")

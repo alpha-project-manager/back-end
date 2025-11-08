@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using TeamProjectConnection;
 using Telegram.Bot;
 
 namespace Application;
@@ -25,13 +26,14 @@ public static class ApplicationStartup
         });
         services.AddSingleton<ITelegramNotifier, TelegramNotifier>();
         
-        services.AddBaseServicesForEntities();
+        services.AddBaseServicesForDomainEntities();
         services.TryAddScoped<BaseService<ApplicationQuestion>>();
         services.TryAddScoped<BaseService<ApplicationQuestionAnswer>>();
+        services.TryAddScoped<TeamProProjectImporter>();
         return services;
     }
     
-    private static IServiceCollection AddBaseServicesForEntities(this IServiceCollection services)
+    private static IServiceCollection AddBaseServicesForDomainEntities(this IServiceCollection services)
     {
         var entityAssembly = typeof(Project).Assembly;
         var entityTypes = entityAssembly.GetTypes()

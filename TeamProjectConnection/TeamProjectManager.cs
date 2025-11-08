@@ -17,7 +17,7 @@ public class TeamProjectManager : ITeamProjectManager
     private const string ApiBaseUrl = "https://teamproject.urfu.ru/api/v2";
     private const string PhotoBaseUrl = "https://teamproject.urfu.ru";
     
-    private readonly ITeamProAuthManager _teamProAuthManager;
+    public ITeamProAuthManager AuthManager { get; }
     
     private readonly JsonSerializerSettings _snakeCaseSerializerSettings = new JsonSerializerSettings
     {
@@ -31,9 +31,9 @@ public class TeamProjectManager : ITeamProjectManager
         MissingMemberHandling = MissingMemberHandling.Ignore
     };
     
-    public TeamProjectManager(ITeamProAuthManager teamProAuthManager)
+    public TeamProjectManager(ITeamProAuthManager authManager)
     {
-        _teamProAuthManager = teamProAuthManager;
+        AuthManager = authManager;
     }
     
     public async Task<TeamProUserResponse?> GetUserDataAsync()
@@ -132,7 +132,7 @@ public class TeamProjectManager : ITeamProjectManager
     
     private TokenResponse CheckAuthorization()
     {
-        if (!_teamProAuthManager.TryGetSavedToken(out var token) || token == null)
+        if (!AuthManager.TryGetSavedToken(out var token) || token == null)
         {
             throw new InvalidOperationException("TeamProAuthManager is not authorized for this scope.");
         }

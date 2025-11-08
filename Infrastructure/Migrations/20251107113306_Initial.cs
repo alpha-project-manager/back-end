@@ -198,7 +198,7 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    case_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    case_id = table.Column<Guid>(type: "uuid", nullable: true),
                     team_title = table.Column<string>(type: "text", nullable: false),
                     title = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
@@ -215,8 +215,7 @@ namespace Infrastructure.Migrations
                         name: "fk_projects_project_cases_case_id",
                         column: x => x.case_id,
                         principalTable: "project_cases",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "id");
                     table.ForeignKey(
                         name: "fk_projects_tutors_tutor_id",
                         column: x => x.tutor_id,

@@ -10,7 +10,7 @@ public class Project : IHasId
     [Key]
     public required Guid Id { get; set; }
     
-    public required Guid CaseId { get; set; }
+    public Guid? CaseId { get; set; }
     [ForeignKey("CaseId")] 
     public ProjectCase Case { get; set; } = null!;
     

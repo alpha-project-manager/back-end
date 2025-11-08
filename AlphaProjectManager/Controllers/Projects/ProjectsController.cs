@@ -1,4 +1,5 @@
-﻿using AlphaProjectManager.Controllers.Projects.Responses;
+﻿using AlphaProjectManager.Controllers.Projects.Requests;
+using AlphaProjectManager.Controllers.Projects.Responses;
 using AlphaProjectManager.Controllers.Students.Responses;
 using Application.DataQuery;
 using Application.Services;
@@ -15,22 +16,24 @@ public class ProjectsController : ControllerBase
     private readonly BaseService<StudentInProject> _studentsInProjectService;
     private readonly BaseService<Meeting> _meetingService;
     private readonly BaseService<ControlPointInProject> _controlPointService;
+    private readonly TeamProProjectImporter _teamProProjectImporter;
 
     public ProjectsController(BaseService<Project> projectService, BaseService<StudentInProject> studentsInProjectService,
-        BaseService<Meeting> meetingService, BaseService<ControlPointInProject> controlPointService)
+        BaseService<Meeting> meetingService, BaseService<ControlPointInProject> controlPointService, TeamProProjectImporter teamProProjectImporter)
     {
         _projectService = projectService;
         _studentsInProjectService = studentsInProjectService;
         _meetingService = meetingService;
         _controlPointService = controlPointService;
+        _teamProProjectImporter = teamProProjectImporter;
     }
     
     /// <summary>
-    /// Получить список проектов
+    /// Получить список проектов с краткой информацией
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ProjectBriefListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetProjectsBrief([FromQuery] int? skip, [FromQuery] int? take, 
+    public async Task<IActionResult> GetProjectsBriefList([FromQuery] int? skip, [FromQuery] int? take, 
         [FromQuery] Guid? tutorId, [FromQuery] Guid? studentId, [FromQuery] string? search)
     {
         var query = new DataQueryParams<Project>
@@ -68,6 +71,23 @@ public class ProjectsController : ControllerBase
         return Ok(new ProjectBriefListResponse
         {
             Projects = projects.Select(ProjectBriefResponse.FromProject).ToArray()
+        });
+    }
+    
+    /// <summary>
+    /// Импортировать список проектов из Team Project
+    /// </summary>
+    [HttpPost("import-from-team-pro")]
+    [ProducesResponseType(typeof(ImportProjectsResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProjectsBriefList([FromBody] ImportProjectsFromTeamProRequest dto)
+    {
+        var result = await _teamProProjectImporter.ImportProjectsFromTeamPro(dto.Login, dto.Password);
+        return Ok(new ImportProjectsResponse
+        {
+            CreatedProjects = result.CreatedProjects.Select(ProjectBriefResponse.FromProject).ToList(),
+            UpdatedProjects = result.UpdatedProjects.Select(ProjectBriefResponse.FromProject).ToList(),
+            Completed = result.Completed,
+            Message = result.Comment
         });
     }
 }

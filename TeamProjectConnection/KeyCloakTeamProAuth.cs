@@ -2,9 +2,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Serilog;
 using TeamProjectConnection.Intefaces;
 using TeamProjectConnection.Models;
 
@@ -18,12 +18,12 @@ public class KeyCloakTeamProAuth : ITeamProAuthManager
     private const string BaseUrl = "https://keys.urfu.ru/auth/realms/" + Realm;
     private const string TokenUrl = $"{BaseUrl}/protocol/openid-connect/token";
     
-    private readonly ILogger _logger;
+    private readonly ILogger<KeyCloakTeamProAuth> _logger;
     
     private TokenResponse? _tokenInfo;
     private DateTime? _tokenExpiresAt;
 
-    public KeyCloakTeamProAuth(ILogger logger)
+    public KeyCloakTeamProAuth(ILogger<KeyCloakTeamProAuth> logger)
     {
         _logger = logger;
     }
@@ -82,7 +82,7 @@ public class KeyCloakTeamProAuth : ITeamProAuthManager
 
         if (string.IsNullOrEmpty(sessionCode) || string.IsNullOrEmpty(execution) || string.IsNullOrEmpty(tabId))
         {
-            _logger.Error("TeamProject authorization parameters could not be retrieved.");
+            _logger.LogError("TeamProject authorization parameters could not be retrieved.");
             return false;
         }
         var loginUrl = $"{BaseUrl}/login-actions/authenticate?session_code={sessionCode}&execution={execution}&client_id={ClientId}&tab_id={tabId}";
@@ -107,7 +107,7 @@ public class KeyCloakTeamProAuth : ITeamProAuthManager
 
             if (state != returnedState)
             {
-                _logger.Error("Login to TeamProject failed: state mismatch. {state} != {returnedState}", state, returnedState);
+                _logger.LogError("Login to TeamProject failed: state mismatch. {state} != {returnedState}", state, returnedState);
                 return false;
             }
 
@@ -134,7 +134,7 @@ public class KeyCloakTeamProAuth : ITeamProAuthManager
             _tokenInfo = JsonConvert.DeserializeObject<TokenResponse>(tokenJson, settings);
             if (_tokenInfo == null)
             {
-                _logger.Error("Failed to deserialize token response from TeamProject. Response: {json}", tokenJson);
+                _logger.LogError("Failed to deserialize token response from TeamProject. Response: {json}", tokenJson);
                 return false;
             }
             _tokenExpiresAt = DateTime.Now.AddSeconds(_tokenInfo.ExpiresIn);
@@ -142,7 +142,7 @@ public class KeyCloakTeamProAuth : ITeamProAuthManager
         }
         
         var text = await loginResp.Content.ReadAsStringAsync();
-        _logger.Error("Login failed. Status: {status}. Content:\n{content}", loginResp.StatusCode, text);
+        _logger.LogError("Login failed. Status: {status}. Content:\n{content}", loginResp.StatusCode, text);
         _tokenInfo = null;
         return false;
     }

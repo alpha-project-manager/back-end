@@ -17,4 +17,6 @@ public interface ITeamProjectManager
     public Task<TeamProDetailsResponse?> GetDetailsForProject(Guid projectId);
 
     public Task<TeamProTeamResponse?> GetTeamForProject(Guid projectId);
+    
+    public ITeamProAuthManager AuthManager { get; }
 }

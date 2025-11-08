@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251105114648_Initial")]
+    [Migration("20251107113306_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -246,7 +246,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("academic_year");
 
-                    b.Property<Guid>("CaseId")
+                    b.Property<Guid?>("CaseId")
                         .HasColumnType("uuid")
                         .HasColumnName("case_id");
 
@@ -796,8 +796,6 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.ProjectCase", "Case")
                         .WithMany()
                         .HasForeignKey("CaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_projects_project_cases_case_id");
 
                     b.HasOne("Domain.Entities.Tutor", "Tutor")

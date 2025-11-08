@@ -4,6 +4,7 @@ using Application.Services.TelegramBot;
 using Infrastructure;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using TeamProjectConnection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,8 @@ builder.Services.TryAddApplicationLayer(builder.Configuration);
 builder.Services.AddHostedService<TelegramBotBackgroundService>();
 
 builder.Services.AddInfrastructure();
+
+builder.Services.AddTeamProjectConnection();
 
 var app = builder.Build();
 app.UseSerilogRequestLogging();

@@ -21,6 +21,19 @@ public class ProjectsService : BaseService<Project>
         _meetingService = meetingService;
     }
 
+    public async Task<Project[]> GetProjectWithStudent(Guid studentId)
+    {
+        var studentsInProjects = await _studentInProjectService.GetAsync(new DataQueryParams<StudentInProject>
+        {
+            Expression = s => s.StudentId == studentId
+        });
+        var projectIds = studentsInProjects.Select(s => s.ProjectId).ToArray();
+        return await base.GetAsync(new DataQueryParams<Project>
+        {
+            Expression = p => projectIds.Contains(p.Id)
+        });
+    }
+    
     public async Task<ServiceActionResult> DeleteProject(Guid projectId)
     {
         var project = await base.GetByIdOrDefaultAsync(projectId);

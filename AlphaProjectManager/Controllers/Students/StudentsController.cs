@@ -1,4 +1,5 @@
 ﻿using AlphaProjectManager.Controllers.Base.Responses;
+using AlphaProjectManager.Controllers.Projects.Responses;
 using AlphaProjectManager.Controllers.Shared;
 using AlphaProjectManager.Controllers.Students.Requests;
 using AlphaProjectManager.Controllers.Students.Responses;
@@ -17,14 +18,16 @@ public class StudentsController : ControllerBase
     private readonly BaseService<StudentInProject> _studentInProjectService;
     private readonly BaseService<StudentAttendance> _attendanceService;
     private readonly BaseService<StudentRole> _roleService;
+    private readonly ProjectsService _projectsService;
 
     public StudentsController(BaseService<Student> studentService, BaseService<StudentInProject> studentInProjectService,
-        BaseService<StudentAttendance> attendanceService, BaseService<StudentRole> roleService)
+        BaseService<StudentAttendance> attendanceService, BaseService<StudentRole> roleService, ProjectsService projectsService)
     {
         _studentService = studentService;
         _studentInProjectService = studentInProjectService;
         _attendanceService = attendanceService;
         _roleService = roleService;
+        _projectsService = projectsService;
     }
     
     /// <summary>
@@ -56,6 +59,20 @@ public class StudentsController : ControllerBase
         return Ok(new StudentListResponse
         {
             Students = students.Select(StudentResponse.FromStudent).ToArray()
+        });
+    }
+    
+    /// <summary>
+    /// Получить список проектов студента с указанным id
+    /// </summary>
+    [HttpGet("{studentId:guid}/projects")]
+    [ProducesResponseType(typeof(ProjectBriefListResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetStudentProjects([FromRoute] Guid studentId)
+    {
+        var projects = await _projectsService.GetProjectWithStudent(studentId);
+        return Ok(new ProjectBriefListResponse
+        {
+            Projects = projects.Select(ProjectBriefResponse.FromProject).ToArray()
         });
     }
     

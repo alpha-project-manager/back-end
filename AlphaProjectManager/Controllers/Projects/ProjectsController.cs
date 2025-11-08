@@ -2,7 +2,6 @@
 using AlphaProjectManager.Controllers.Projects.Requests;
 using AlphaProjectManager.Controllers.Projects.Responses;
 using AlphaProjectManager.Controllers.Shared;
-using AlphaProjectManager.Controllers.Students.Responses;
 using Application.DataQuery;
 using Application.Services;
 using Application.Utils;
@@ -21,15 +20,18 @@ public class ProjectsController : ControllerBase
     private readonly MeetingService _meetingService;
     private readonly BaseService<ControlPointInProject> _controlPointService;
     private readonly TeamProProjectImporter _teamProProjectImporter;
+    private readonly BaseService<Student> _studentService;
 
     public ProjectsController(ProjectsService projectService, BaseService<StudentInProject> studentsInProjectService,
-        MeetingService meetingService, BaseService<ControlPointInProject> controlPointService, TeamProProjectImporter teamProProjectImporter)
+        MeetingService meetingService, BaseService<ControlPointInProject> controlPointService, TeamProProjectImporter teamProProjectImporter,
+        BaseService<Student> studentService)
     {
         _projectService = projectService;
         _studentsInProjectService = studentsInProjectService;
         _meetingService = meetingService;
         _controlPointService = controlPointService;
         _teamProProjectImporter = teamProProjectImporter;
+        _studentService = studentService;
     }
     
     /// <summary>
@@ -191,6 +193,69 @@ public class ProjectsController : ControllerBase
         {
             Completed = true,
             Message = ""
+        });
+    }
+    
+    /// <summary>
+    /// Удалить студента из проекта
+    /// </summary>
+    [HttpDelete("{projectId:guid}/students/{studentId:guid}")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteStudentFromProject([FromRoute] Guid projectId, [FromRoute] Guid studentId)
+    {
+        var foundResult = await _studentsInProjectService.GetAsync(new DataQueryParams<StudentInProject>
+        {
+            Expression = s => s.StudentId == studentId && s.ProjectId == projectId
+        });
+        if (foundResult.Length == 0)
+        {
+            return SharedResponses.FailedRequest($"Student with ID {studentId} does not participate in project with ID {projectId}.");
+        }
+        await _studentsInProjectService.TryRemoveAsync(foundResult[0].Id);
+        return Ok(new BaseStatusResponse
+        {
+            Completed = true,
+            Message = "Student removed from project."
+        });
+    }
+    
+    /// <summary>
+    /// Добавить студента в проекта
+    /// </summary>
+    [HttpPost("{projectId:guid}/students/{studentId:guid}")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AddStudentToProject([FromRoute] Guid projectId, [FromRoute] Guid studentId)
+    {
+        var foundResult = await _studentsInProjectService.GetAsync(new DataQueryParams<StudentInProject>
+        {
+            Expression = s => s.StudentId == studentId && s.ProjectId == projectId
+        });
+        if (foundResult.Length != 0)
+        {
+            return SharedResponses.FailedRequest($"Student with ID {studentId} already participate in project with ID {projectId}.");
+        }
+        var student = await _studentService.GetByIdOrDefaultAsync(studentId);
+        if (student == null)
+        {
+            return SharedResponses.FailedRequest($"Student with ID {studentId} does not exist.");
+        }
+        var project = await _projectService.GetByIdOrDefaultAsync(projectId);
+        if (project == null)
+        {
+            return SharedResponses.FailedRequest($"Project with ID {projectId} does not exist.");
+        }
+        await _studentsInProjectService.CreateAsync(new StudentInProject
+        {
+            Id = Guid.NewGuid(),
+            ProjectId = projectId,
+            StudentId = studentId
+        });
+        return Ok(new BaseStatusResponse
+        {
+            Completed = true,
+            Message = "Student added to project."
         });
     }
 }

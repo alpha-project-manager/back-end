@@ -53,6 +53,7 @@ public partial class TelegramBotBackgroundService
             Status = ApplicationStatus.InProgress,
             CurrentQuestionId = null,
             TelegramUsername = userName,
+            UpdatedTime = DateTime.Now.ToUniversalTime(),
         };
         var firstQuestion = await TryGetFirstQuestion();
         application.CurrentQuestionId = firstQuestion?.Id;
@@ -130,6 +131,7 @@ public partial class TelegramBotBackgroundService
     {
         var scope = _services.CreateScope();
         var messageService = scope.ServiceProvider.GetRequiredService<BaseService<ApplicationMessage>>();
+        var applicationService = scope.ServiceProvider.GetRequiredService<BaseService<ProjectApplication>>();
         var message = new ApplicationMessage
         {
             Id = Guid.NewGuid(),
@@ -140,5 +142,7 @@ public partial class TelegramBotBackgroundService
             IsRead = false
         };
         await messageService.CreateAsync(message);
+        application.UpdatedTime = DateTime.Now.ToUniversalTime();
+        await applicationService.UpdateAsync(application);
     }
 }

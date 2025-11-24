@@ -28,4 +28,6 @@ public class ProjectCase : IHasId
     public required int AcceptedTeams { get; set; }
     
     public required bool IsActive { get; set; }
+    
+    public required DateTime UpdatedTime { get; set; }
 }

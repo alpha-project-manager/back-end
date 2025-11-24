@@ -8,6 +8,7 @@ using Application.DataQuery;
 using Application.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AlphaProjectManager.Controllers.ProjectCases;
 
@@ -15,10 +16,12 @@ namespace AlphaProjectManager.Controllers.ProjectCases;
 public class ProjectCaseController : ControllerBase
 {
     private readonly BaseService<ProjectCase> _caseService;
+    private readonly BaseService<CaseVote> _votesService;
 
-    public ProjectCaseController(BaseService<ProjectCase> caseService)
+    public ProjectCaseController(BaseService<ProjectCase> caseService, BaseService<CaseVote> votesService)
     {
         _caseService = caseService;
+        _votesService = votesService;
     }
     
     /// <summary>
@@ -26,18 +29,45 @@ public class ProjectCaseController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ProjectCaseListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllBrief()
+    public async Task<IActionResult> GetAllBrief([FromQuery] int? skip, [FromQuery] int? take, 
+        [FromQuery] Guid? tutorId, [FromQuery] string? search)
     {
-        var foundCases = await _caseService.GetAsync(new DataQueryParams<ProjectCase>
+        var query = new DataQueryParams<ProjectCase>
         {
+            Filters = [],
+            Paging = new PagingParams(skip ?? 0, take ?? 10),
             IncludeParams = new IncludeParams<ProjectCase>
             {
-                IncludeProperties = [c => c.Tutor]
+                IncludeProperties = [p => p.Tutor]
+            },
+            Sorting = new SortingParams<ProjectCase>
+            {
+                OrderBy = c => c.UpdatedTime,
+                Ascending = false
             }
-        });
+        };
+        if (tutorId.HasValue)
+        {
+            query.Filters.Add(p => p.TutorId == tutorId);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query.Expression = p => EF.Functions.ILike(p.Title, $"%{search}%") 
+                                    || EF.Functions.ILike(p.Description, $"%{search}%");
+        }
+        var foundCases = await _caseService.GetAsync(query);
+        var caseIds = foundCases.Select(c => c.Id).ToArray();
+        var caseVotesMap = (await _votesService.GetAsync(new DataQueryParams<CaseVote>
+        {
+            Expression = v => caseIds.Contains(v.CaseId)
+        })).GroupBy(v => v.CaseId)
+        .ToDictionary(
+            g => foundCases.First(a => a.Id == g.Key), 
+            g => g.ToArray());
+        
         return Ok(new ProjectCaseListResponse
         {
-            Cases = foundCases.Select(DtoConverter.ProjectCaseToBriefResponse).ToArray(),
+            Cases = caseVotesMap.Select(kv => ProjectCaseBriefResponse.FromProjectCase(kv.Key, kv.Value)).ToArray(),
             Completed = true,
             Message = ""
         });
@@ -63,7 +93,13 @@ public class ProjectCaseController : ControllerBase
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
-        return Ok(DtoConverter.ProjectCaseToBriefResponse(foundCases[0]));
+
+        var foundCase = foundCases[0];
+        var votes = await _votesService.GetAsync(new DataQueryParams<CaseVote>
+        {
+            Expression = v => v.CaseId == foundCase.Id
+        });
+        return Ok(ProjectCaseBriefResponse.FromProjectCase(foundCase, votes));
     }
     
     /// <summary>
@@ -86,7 +122,7 @@ public class ProjectCaseController : ControllerBase
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
-        return Ok(DtoConverter.ProjectCaseToFullResponse(foundCases[0]));
+        return Ok(ProjectCaseFullResponse.FromProjectCase(foundCases[0]));
     }
     
     /// <summary>
@@ -102,11 +138,12 @@ public class ProjectCaseController : ControllerBase
             Title = "Новый кейс",
             MaxTeams = 0,
             AcceptedTeams = 0,
-            IsActive = false
+            IsActive = false,
+            UpdatedTime = DateTime.Now.ToUniversalTime()
         };
         await _caseService.CreateAsync(newCase);
         
-        return Ok(DtoConverter.ProjectCaseToFullResponse(newCase));
+        return Ok(ProjectCaseFullResponse.FromProjectCase(newCase));
     }
     
     /// <summary>
@@ -143,7 +180,8 @@ public class ProjectCaseController : ControllerBase
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
         DtoConverter.MapPropertiesValues(dto, foundCase);
+        foundCase.UpdatedTime = DateTime.Now.ToUniversalTime();
         await _caseService.UpdateAsync(foundCase);
-        return Ok(DtoConverter.ProjectCaseToFullResponse(foundCase));
+        return Ok(ProjectCaseFullResponse.FromProjectCase(foundCase));
     }
 }

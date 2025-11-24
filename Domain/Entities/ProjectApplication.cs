@@ -23,6 +23,8 @@ public class ProjectApplication : IHasId
     
     public required string TelegramUsername { get; set; }
     
+    public required DateTime UpdatedTime { get; set; }
+    
     public Guid? CurrentQuestionId { get; set; }
     [ForeignKey("NextQuestionId")] 
     public ApplicationQuestion? CurrentQuestion { get; set; }

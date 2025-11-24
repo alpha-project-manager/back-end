@@ -45,10 +45,19 @@ public class ApplicationController : ControllerBase
                 IncludeProperties = [appl => appl.ProjectCase]
             }
         });
+        var applicationIds = foundApplications.Select(a => a.Id).ToArray();
+        var applicationMessagesMap = (await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
+        {
+            Expression = m => !m.IsRead,
+            Filters = [m => applicationIds.Contains(m.ApplicationId)]
+        })).GroupBy(m => m.ApplicationId)
+            .ToDictionary(
+                g => foundApplications.First(a => a.Id == g.Key), 
+                g => g.ToArray());
         
         return Ok(new ApplicationBriefListResponse
         {
-            Applications = foundApplications.Select(ApplicationBriefResponse.FromApplication).ToArray()
+            Applications = applicationMessagesMap.Select(kv => ApplicationBriefResponse.FromApplication(kv.Key, kv.Value)).ToArray()
         });
     }
     
@@ -85,6 +94,29 @@ public class ApplicationController : ControllerBase
         });
         
         return Ok(ApplicationResponse.FromDomainEntities(foundApplication, answers, msgs));
+    }
+    
+    /// <summary>
+    /// Обновить информацию о заявке по id
+    /// </summary>
+    [HttpPut($"{{{nameof(applicationId)}:guid}}")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateApplication([FromRoute] Guid applicationId, [FromBody] UpdateApplicationRequest dto)
+    {
+        var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
+        {
+            Expression = appl => appl.Id == applicationId
+        });
+        if (foundApplications.Length == 0)
+        {
+            return SharedResponses.NotFoundObjectResponse<ProjectApplication>(applicationId);
+        }
+        var application = foundApplications[0];
+        dto.ApplyToApplication(application);
+        await _applicationService.UpdateAsync(application);
+        return SharedResponses.SuccessRequest("Application updated.");
     }
     
     /// <summary>

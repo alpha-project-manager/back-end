@@ -203,6 +203,7 @@ public partial class TelegramBotBackgroundService : BackgroundService
         };
         await answerService.CreateAsync(answer);
         application.CurrentQuestionId = questions.NextQuestion?.Id;
+        application.UpdatedTime = DateTime.Now.ToUniversalTime();
         if (application.CurrentQuestionId == null)
         {
             application.Status = ApplicationStatus.New;

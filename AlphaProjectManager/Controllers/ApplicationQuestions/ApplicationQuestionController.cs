@@ -48,7 +48,7 @@ public class ApplicationQuestionController : ControllerBase
         {
             Completed = true,
             Message = "",
-            Questions = resultList.Select(DtoConverter.ApplicationQuestionToResponse).ToArray()
+            Questions = resultList.Select(QuestionResponse.FromApplicationQuestion).ToArray()
         });
     }
     
@@ -65,7 +65,7 @@ public class ApplicationQuestionController : ControllerBase
         {
             return SharedResponses.NotFoundObjectResponse<ApplicationQuestion>(questionId);
         }
-        return Ok(DtoConverter.ApplicationQuestionToResponse(foundQuestion));
+        return Ok(QuestionResponse.FromApplicationQuestion(foundQuestion));
     }
     
     /// <summary>
@@ -93,7 +93,7 @@ public class ApplicationQuestionController : ControllerBase
             await _questionService.UpdateAsync(lastQuestions[0]);
         }
         
-        return Ok(DtoConverter.ApplicationQuestionToResponse(newQuestion));
+        return Ok(QuestionResponse.FromApplicationQuestion(newQuestion));
     }
     
     /// <summary>
@@ -152,6 +152,6 @@ public class ApplicationQuestionController : ControllerBase
         }
         DtoConverter.MapPropertiesValues(dto, foundQuestion);
         await _questionService.UpdateAsync(foundQuestion);
-        return Ok(DtoConverter.ApplicationQuestionToResponse(foundQuestion));
+        return Ok(QuestionResponse.FromApplicationQuestion(foundQuestion));
     }
 }

@@ -19,6 +19,8 @@ public class ApplicationResponse : BaseStatusResponse
     
     public required ApplicationStatus Status { get; set; }
     
+    public required DateTime UpdatedAt { get; set; }
+    
     public required ApplicationQuestionAnswerResponse[] QuestionResponses { get; set; }
     
     public required MessageResponse[] Messages { get; set; }
@@ -39,7 +41,8 @@ public class ApplicationResponse : BaseStatusResponse
             Messages = messages.Select(MessageResponse.FromApplicationMessage)
                 .ToArray(),
             Completed = true,
-            Message = ""
+            Message = "",
+            UpdatedAt = application.UpdatedTime
         };
     }
 }

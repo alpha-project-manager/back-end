@@ -18,15 +18,12 @@ public static class DtoConverter
             Filters = null,
             IncludeParams = null
         };
-        if (skip != null && take != null)
+        queryParams.Paging = new PagingParams
         {
-            queryParams.Paging = new PagingParams
-            {
-                Skip = skip ?? 0,
-                Take = take ?? 10
-            };
-        }
-
+            Skip = skip ?? 0,
+            Take = take ?? 10
+        };
+        
         if (!string.IsNullOrWhiteSpace(orderProperty))
         {
             queryParams.Sorting = new SortingParams<T>
@@ -37,52 +34,6 @@ public static class DtoConverter
         }
         
         return queryParams;
-    }
-
-    public static ProjectCaseFullResponse ProjectCaseToFullResponse(ProjectCase projectCase)
-    {
-        return new ProjectCaseFullResponse
-        {
-            Id = projectCase.Id,
-            Title = projectCase.Title,
-            Description = projectCase.Description,
-            Goal = projectCase.Goal,
-            RequestedResult = projectCase.RequestedResult,
-            Criteria = projectCase.Criteria,
-            TutorId = projectCase.TutorId,
-            TutorFio = projectCase.Tutor?.FullName,
-            MaxTeams = projectCase.MaxTeams,
-            AcceptedTeams = projectCase.AcceptedTeams,
-            IsActive = projectCase.IsActive,
-            Completed = true,
-            Message = ""
-        };
-    }
-    
-    public static ProjectCaseBriefResponse ProjectCaseToBriefResponse(ProjectCase projectCase)
-    {
-        return new ProjectCaseBriefResponse
-        {
-            Id = projectCase.Id,
-            Title = projectCase.Title,
-            TutorId = projectCase.TutorId,
-            TutorFio = projectCase.Tutor?.FullName,
-            MaxTeams = projectCase.MaxTeams,
-            AcceptedTeams = projectCase.AcceptedTeams,
-            IsActive = projectCase.IsActive
-        };
-    }
-    
-    public static QuestionResponse ApplicationQuestionToResponse(ApplicationQuestion question)
-    {
-        return new QuestionResponse
-        {
-            Id = question.Id,
-            Title = question.Title,
-            MsgText = question.MsgText,
-            PrevQuestionId = question.PrevQuestionId,
-            NextQuestionId = question.NextQuestionId
-        };
     }
     
     public static void MapPropertiesValues<TSource, TDestination>(TSource source, TDestination destination)

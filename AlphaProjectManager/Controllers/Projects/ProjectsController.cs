@@ -45,11 +45,7 @@ public class ProjectsController : ControllerBase
         var query = new DataQueryParams<Project>
         {
             Filters = [],
-            Paging = new PagingParams
-            {
-                Skip = skip ?? 0,
-                Take = take ?? 50
-            },
+            Paging = new PagingParams(skip ?? 0, take ?? 10),
             IncludeParams = new IncludeParams<Project>
             {
                 IncludeProperties = [p => p.Tutor]
@@ -109,11 +105,11 @@ public class ProjectsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             CaseId = dto.CaseId,
-            TeamTitle = "",
+            TeamTitle = dto.TeamTitle,
             Title = dto.Title,
-            Description = "",
+            Description = dto.Description,
             TutorId = null, // TODO: From Current User
-            MeetingUrl = "",
+            MeetingUrl = dto.MeetingUrl ?? "",
             Status = ProjectStatus.Created,
             Semester = sem.Semester,
             AcademicYear = sem.Year

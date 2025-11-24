@@ -1,4 +1,6 @@
 ﻿using AlphaProjectManager.Controllers.Base.Responses;
+using Domain.Entities;
+using Domain.Enums;
 
 namespace AlphaProjectManager.Controllers.ProjectCases.Responses;
 
@@ -17,4 +19,27 @@ public class ProjectCaseBriefResponse
     public required int AcceptedTeams { get; set; }
     
     public required bool IsActive { get; set; }
+    
+    public required DateTime UpdatedAt { get; set; }
+    
+    public required Dictionary<CaseReactionType, List<Guid>> Votes { get; set; }
+
+    public static ProjectCaseBriefResponse FromProjectCase(ProjectCase projectCase, CaseVote[] votes)
+    {
+        return new ProjectCaseBriefResponse
+        {
+            Id = projectCase.Id,
+            Title = projectCase.Title,
+            TutorId = projectCase.TutorId,
+            TutorFio = projectCase.Tutor?.FullName,
+            MaxTeams = projectCase.MaxTeams,
+            AcceptedTeams = projectCase.AcceptedTeams,
+            IsActive = projectCase.IsActive,
+            UpdatedAt = projectCase.UpdatedTime,
+            Votes = votes.GroupBy(v => v.ReactionType)
+                .ToDictionary(
+                    g => g.Key, 
+                    g => g.Select(v => v.UserId).ToList())
+        };
+    }
 }

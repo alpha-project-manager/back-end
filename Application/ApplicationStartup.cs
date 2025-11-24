@@ -1,4 +1,5 @@
 ﻿using Application.Services;
+using Application.Services.Meetings;
 using Application.Services.TelegramBot;
 using Application.Services.TelegramBot.Config;
 using Application.Services.TelegramBot.Notifier;
@@ -33,6 +34,7 @@ public static class ApplicationStartup
         
         services.TryAddScoped<ProjectsService>();
         services.TryAddScoped<MeetingService>();
+        services.TryAddScoped<ControlPointService>();
         return services;
     }
     

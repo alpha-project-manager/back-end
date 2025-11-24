@@ -4,6 +4,7 @@ using AlphaProjectManager.Controllers.Projects.Responses;
 using AlphaProjectManager.Controllers.Shared;
 using Application.DataQuery;
 using Application.Services;
+using Application.Services.Meetings;
 using Application.Utils;
 using Domain.Entities;
 using Domain.Enums;
@@ -125,7 +126,7 @@ public class ProjectsController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> DeleteProject([FromRoute] Guid projectId)
     {
-        var result = await _projectService.DeleteProject(projectId);
+        var result = await _projectService.DeleteProjectAsync(projectId);
         if (!result.Completed)
         {
             return SharedResponses.FailedRequest(result.Comment);

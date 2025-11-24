@@ -69,7 +69,7 @@ public class StudentsController : ControllerBase
     [ProducesResponseType(typeof(ProjectBriefListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStudentProjects([FromRoute] Guid studentId)
     {
-        var projects = await _projectsService.GetProjectWithStudent(studentId);
+        var projects = await _projectsService.GetProjectsWithStudentAsync(studentId);
         return Ok(new ProjectBriefListResponse
         {
             Projects = projects.Select(ProjectBriefResponse.FromProject).ToArray()

@@ -1,5 +1,6 @@
 ﻿using Application.DataQuery;
 using Application.Models;
+using Application.Services.Meetings;
 using Domain.Entities;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ public class ProjectsService : BaseService<Project>
         _meetingService = meetingService;
     }
 
-    public async Task<Project[]> GetProjectWithStudent(Guid studentId)
+    public async Task<Project[]> GetProjectsWithStudentAsync(Guid studentId)
     {
         var studentsInProjects = await _studentInProjectService.GetAsync(new DataQueryParams<StudentInProject>
         {
@@ -34,7 +35,7 @@ public class ProjectsService : BaseService<Project>
         });
     }
     
-    public async Task<ServiceActionResult> DeleteProject(Guid projectId)
+    public async Task<ServiceActionResult> DeleteProjectAsync(Guid projectId)
     {
         var project = await base.GetByIdOrDefaultAsync(projectId);
         if (project == null)

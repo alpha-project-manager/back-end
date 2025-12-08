@@ -64,6 +64,31 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "refresh_tokens",
+                columns: table => new
+                {
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    token = table.Column<string>(type: "text", nullable: false),
+                    expiry_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_refresh_tokens", x => x.user_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "revoked_access_tokens",
+                columns: table => new
+                {
+                    jti = table.Column<Guid>(type: "uuid", nullable: false),
+                    expiration_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_revoked_access_tokens", x => x.jti);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "student_roles",
                 columns: table => new
                 {
@@ -125,7 +150,8 @@ namespace Infrastructure.Migrations
                     tutor_id = table.Column<Guid>(type: "uuid", nullable: true),
                     max_teams = table.Column<int>(type: "integer", nullable: false),
                     accepted_teams = table.Column<int>(type: "integer", nullable: false),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false)
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    updated_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -144,7 +170,9 @@ namespace Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
                     password_hash = table.Column<string>(type: "text", nullable: false),
-                    salt = table.Column<string>(type: "text", nullable: false),
+                    first_name = table.Column<string>(type: "text", nullable: false),
+                    last_name = table.Column<string>(type: "text", nullable: true),
+                    patronymic = table.Column<string>(type: "text", nullable: true),
                     calendar_settings_id = table.Column<Guid>(type: "uuid", nullable: false),
                     tutor_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
@@ -174,6 +202,7 @@ namespace Infrastructure.Migrations
                     status = table.Column<int>(type: "integer", nullable: false),
                     chat_id = table.Column<long>(type: "bigint", nullable: false),
                     telegram_username = table.Column<string>(type: "text", nullable: false),
+                    updated_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     current_question_id = table.Column<Guid>(type: "uuid", nullable: true),
                     next_question_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
@@ -577,6 +606,12 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "control_point_in_projects");
+
+            migrationBuilder.DropTable(
+                name: "refresh_tokens");
+
+            migrationBuilder.DropTable(
+                name: "revoked_access_tokens");
 
             migrationBuilder.DropTable(
                 name: "student_attendances");

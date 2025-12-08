@@ -13,7 +13,11 @@ public class User : IHasId
     
     public required string PasswordHash { get; set; }
     
-    public required string Salt { get; set; }
+    public required string FirstName { get; set; }
+
+    public string? LastName { get; set; } = "";
+    
+    public string? Patronymic { get; set; } = "";
     
     public required Guid CalendarSettingsId { get; set; }
     [ForeignKey("CalendarSettingsId")] 

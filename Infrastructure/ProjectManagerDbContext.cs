@@ -31,6 +31,9 @@ public class ProjectManagerDbContext : DbContext
     public DbSet<ApplicationQuestion> ApplicationQuestions { get; init; }
     public DbSet<ApplicationQuestionAnswer> ApplicationQuestionAnswers { get; init; }
     
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<RevokedAccessToken> RevokedAccessTokens { get; init; }
+    
     public ProjectManagerDbContext(IConfiguration configuration)
     {
         var readConnString = configuration.GetConnectionString("DefaultConnection");

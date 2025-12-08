@@ -1,4 +1,4 @@
-﻿namespace CoffeeEvents.Controllers.Authorization.Responses;
+﻿namespace AlphaProjectManager.Controllers.Authorization.Responses;
 
 public class RefreshResponse
 {

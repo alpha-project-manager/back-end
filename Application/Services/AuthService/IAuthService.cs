@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
 
-namespace Application.AuthService;
+namespace Application.Services.AuthService;
 
 public interface IAuthService
 {

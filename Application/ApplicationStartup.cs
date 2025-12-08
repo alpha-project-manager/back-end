@@ -1,4 +1,5 @@
 ﻿using Application.Services;
+using Application.Services.AuthService;
 using Application.Services.Meetings;
 using Application.Services.TelegramBot;
 using Application.Services.TelegramBot.Config;
@@ -31,6 +32,7 @@ public static class ApplicationStartup
         services.TryAddScoped<BaseService<ApplicationQuestion>>();
         services.TryAddScoped<BaseService<ApplicationQuestionAnswer>>();
         services.TryAddScoped<TeamProProjectImporter>();
+        services.TryAddScoped<IAuthService, AuthService>();
         
         services.TryAddScoped<ProjectsService>();
         services.TryAddScoped<MeetingService>();

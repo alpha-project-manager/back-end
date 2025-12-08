@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ProjectManagerDbContext))]
-    [Migration("20251107113306_Initial")]
+    [Migration("20251208102308_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -331,6 +331,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("telegram_username");
 
+                    b.Property<DateTime>("UpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_time");
+
                     b.HasKey("Id")
                         .HasName("pk_project_applications");
 
@@ -391,6 +395,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("tutor_id");
 
+                    b.Property<DateTime>("UpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_time");
+
                     b.HasKey("Id")
                         .HasName("pk_project_cases");
 
@@ -398,6 +406,45 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("ix_project_cases_tutor_id");
 
                     b.ToTable("project_cases", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiry_date");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("token");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_refresh_tokens");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.RevokedAccessToken", b =>
+                {
+                    b.Property<Guid>("Jti")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("jti");
+
+                    b.Property<DateTime>("ExpirationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiration_time");
+
+                    b.HasKey("Jti")
+                        .HasName("pk_revoked_access_tokens");
+
+                    b.ToTable("revoked_access_tokens", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Student", b =>
@@ -701,15 +748,23 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("email");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text")
+                        .HasColumnName("last_name");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
-                    b.Property<string>("Salt")
-                        .IsRequired()
+                    b.Property<string>("Patronymic")
                         .HasColumnType("text")
-                        .HasColumnName("salt");
+                        .HasColumnName("patronymic");
 
                     b.Property<Guid?>("TutorId")
                         .HasColumnType("uuid")

@@ -1,6 +1,6 @@
-﻿using CoffeeEvents.Controllers.Base.Responses;
+﻿using AlphaProjectManager.Controllers.Base.Responses;
 
-namespace CoffeeEvents.Controllers.Authorization.Responses;
+namespace AlphaProjectManager.Controllers.Authorization.Responses;
 
 public class RegisterResponse : BaseStatusResponse
 {

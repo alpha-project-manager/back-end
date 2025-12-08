@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace CoffeeEvents.Utility;
+namespace AlphaProjectManager.Utility;
 
 public static class AuthorizationConfiguration
 {

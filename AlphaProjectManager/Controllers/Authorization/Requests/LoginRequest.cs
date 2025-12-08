@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CoffeeEvents.Controllers.Authorization.Requests;
+namespace AlphaProjectManager.Controllers.Authorization.Requests;
 
 public class LoginRequest
 {

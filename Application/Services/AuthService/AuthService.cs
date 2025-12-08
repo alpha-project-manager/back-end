@@ -1,29 +1,25 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Application.Services;
-using Application.Utility;
+using Application.DataQuery;
+using Application.Utils;
 using Domain;
-using Domain.DataQuery;
 using Domain.Entities;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Application.AuthService;
+namespace Application.Services.AuthService;
 
 public class AuthService : IAuthService
 {
     private readonly BaseService<User> _userService;
-    private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
-    private readonly BaseService<UserRole> _roleService;
+    private readonly IDbContextFactory<ProjectManagerDbContext> _dbContextFactory;
 
-    public AuthService(BaseService<User> userService, IDbContextFactory<ApplicationDbContext> dbContextFactory,
-        BaseService<UserRole> roleService)
+    public AuthService(BaseService<User> userService, IDbContextFactory<ProjectManagerDbContext> dbContextFactory)
     {
         _userService = userService;
         _dbContextFactory = dbContextFactory;
-        _roleService = roleService;
     }
     
     public async Task<(User? User, string RefreshToken, string AccessToken, string errorMsg)> TryLoginUserAsync(
@@ -31,20 +27,15 @@ public class AuthService : IAuthService
     {
         var foundUsers = await _userService.GetAsync(new DataQueryParams<User>
         {
-            Expression = u => u.Email == email,
-            IncludeParams = new IncludeParams<User>
-            {
-                IncludeProperties = [u => u.Role]
-            }
+            Expression = u => u.Email == email
         });
-        if (foundUsers.Length == 0 || 
-            !PasswordHelper.VerifyPassword(foundUsers[0].PasswordHash, password))
+        if (foundUsers.Length == 0 || !PasswordHelper.VerifyPassword(foundUsers[0].PasswordHash, password))
         {
             return (null, string.Empty, string.Empty, 
                 "No user with that email and password combination was found");
         }
         var user = foundUsers[0];
-        var accesToken = GenerateAccessToken(user.Id, user.Role.Title);
+        var accessToken = GenerateAccessToken(user.Id, "tutor", user.TutorId);
         var refreshToken = new RefreshToken
         {
             UserId = user.Id,
@@ -52,16 +43,12 @@ public class AuthService : IAuthService
             ExpiryDate = DateTime.UtcNow.AddDays(7)
         };
         await SaveRefreshTokenAsync(refreshToken);
-        return (user, refreshToken.Token, accesToken, string.Empty);
+        return (user, refreshToken.Token, accessToken, string.Empty);
     }
 
     public async Task<(User User, string RefreshToken, string AccessToken)> RegisterUserOrThrowAsync(User user)
     {
-        var userRole = (await _roleService.GetAsync(new DataQueryParams<UserRole>
-        {
-            Expression = r => r.Id == user.RoleId
-        }))[0];
-        var accessToken = GenerateAccessToken(user.Id, userRole.Title);
+        var accessToken = GenerateAccessToken(user.Id, "tutor", user.TutorId);
         var refreshToken = new RefreshToken
         {
             UserId = user.Id,
@@ -69,7 +56,7 @@ public class AuthService : IAuthService
             ExpiryDate = DateTime.UtcNow.AddDays(7)
         };
         await SaveRefreshTokenAsync(refreshToken);
-        await _userService.SaveAsync(user);
+        await _userService.CreateAsync(user);
         
         return (user, refreshToken.Token, accessToken);
     }
@@ -91,11 +78,7 @@ public class AuthService : IAuthService
         
         var users = await _userService.GetAsync(new DataQueryParams<User>
         {
-            Expression = u => u.Id == existingRefreshToken.UserId,
-            IncludeParams = new IncludeParams<User>
-            {
-                IncludeProperties = [u => u.Role]
-            }
+            Expression = u => u.Id == existingRefreshToken.UserId
         });
         if (users.Length < 1)
         {
@@ -107,7 +90,7 @@ public class AuthService : IAuthService
         existingRefreshToken.Token = newRefreshToken;
         existingRefreshToken.ExpiryDate = DateTime.UtcNow.AddDays(7);
         await SaveRefreshTokenAsync(existingRefreshToken);
-        var newAccessToken = GenerateAccessToken(user.Id, user.Role.Title);
+        var newAccessToken = GenerateAccessToken(user.Id, "tutor", user.TutorId);
         return (user, newRefreshToken, newAccessToken, string.Empty);
     }
 
@@ -161,13 +144,14 @@ public class AuthService : IAuthService
         return Convert.ToBase64String(randomNumber);
     }
     
-    private string GenerateAccessToken(Guid userId, string roleTitle)
+    private string GenerateAccessToken(Guid userId, string roleTitle, Guid? tutorId = null)
     {
         var claims = new[]
         {
             new Claim(AuthOptions.ClaimTypeUserId, userId.ToString()),
             new Claim(AuthOptions.ClaimTypeRole, roleTitle),
-            new Claim(AuthOptions.ClaimTypeJti, Guid.NewGuid().ToString())
+            new Claim(AuthOptions.ClaimTypeJti, Guid.NewGuid().ToString()),
+            new Claim(AuthOptions.ClaimTypeTutorId, tutorId?.ToString() ?? "")
         };
 
         var key = AuthOptions.GetSymmetricSecurityKey();

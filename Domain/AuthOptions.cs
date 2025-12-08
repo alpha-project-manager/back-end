@@ -7,13 +7,14 @@ namespace Domain;
 
 public static class AuthOptions
 {
-    public const string Issuer = "UnbeatableBookingServer"; // издатель токена
-    public const string Audience = "UnbeatableBookingClient"; // потребитель токена
+    public const string Issuer = "AlphaProjectManagerServer"; // издатель токена
+    public const string Audience = "AlphaProjectManagerClient"; // потребитель токена
     private const string SecretKey = "RsI2VwEQoMUXyUVDIegYF7jg6XqJQdqCdD88Uxof";   // ключ для шифрации
     public static SymmetricSecurityKey GetSymmetricSecurityKey() => 
         new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
 
     public const string RefreshTokenCookieName = "refreshToken";
+    public const string ClaimTypeTutorId = "tutor_id";
     public const string ClaimTypeUserId = JwtRegisteredClaimNames.UniqueName;
     public const string ClaimTypeRole = ClaimTypes.Role;
     public const string ClaimTypeJti = JwtRegisteredClaimNames.Jti;

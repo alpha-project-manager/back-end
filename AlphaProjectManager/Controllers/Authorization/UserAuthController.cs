@@ -1,31 +1,35 @@
 ﻿using System.Linq.Expressions;
-using Application.AuthService;
+using AlphaProjectManager.Controllers.Authorization.Requests;
+using AlphaProjectManager.Controllers.Authorization.Responses;
+using AlphaProjectManager.Controllers.Base.Responses;
+using AlphaProjectManager.Controllers.Shared;
+using Application.DataQuery;
 using Application.Services;
-using Application.Utility;
-using CoffeeEvents.Controllers.Authorization.Requests;
-using CoffeeEvents.Controllers.Authorization.Responses;
-using CoffeeEvents.Controllers.Base.Responses;
+using Application.Services.AuthService;
+using Application.Utils;
 using Domain;
-using Domain.DataQuery;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CoffeeEvents.Controllers.Authorization;
+namespace AlphaProjectManager.Controllers.Authorization;
 
 [Route("/api/auth/")]
 public class UserAuthController : Controller
 {
     private readonly IAuthService _authService;
-    private readonly BaseService<UserRole> _roleService;
     private readonly BaseService<User> _userService;
+    private readonly BaseService<Tutor> _tutorService;
+    private readonly BaseService<CalendarSettings> _calendarSettingsService;
 
-    public UserAuthController(IAuthService authService, BaseService<UserRole> roleService,
-        BaseService<User> userService)
+    public UserAuthController(IAuthService authService,
+        BaseService<User> userService, BaseService<Tutor> tutorService, 
+        BaseService<CalendarSettings> calendarSettingsService)
     {
         _authService = authService;
-        _roleService = roleService;
         _userService = userService;
+        _tutorService = tutorService;
+        _calendarSettingsService = calendarSettingsService;
     }
     
     /// <summary>
@@ -38,37 +42,23 @@ public class UserAuthController : Controller
     {
         if (User.Identity!.IsAuthenticated)
         {
-            return BadRequest(new BaseStatusResponse
-            {
-                Completed = false,
-                Status = "Failed",
-                Message = "User is already authenticated."
-            });
+            return SharedResponses.FailedRequest("User is already authenticated.");
         }
         
         var loginInfo = await _authService.TryLoginUserAsync(dto.Email, dto.Password);
         if (loginInfo.User == null)
         {
-            return BadRequest(new LoginResponse
-            {
-                UserId = null,
-                Status = "Failed",
-                Message = loginInfo.errorMsg,
-                Completed = false,
-                AccessToken = string.Empty
-            });
+            return SharedResponses.FailedRequest(loginInfo.errorMsg);
         }
         WriteRefreshTokenToCookies(loginInfo.RefreshToken);
         
-        var res = new LoginResponse
+        return Ok(new LoginResponse
         {
             UserId = loginInfo.User.Id,
-            Status = "Success",
             Message = "User successfully authorized.",
             Completed = true,
             AccessToken = loginInfo.AccessToken
-        };
-        return Ok(res);
+        });
     }
     
     /// <summary>
@@ -84,23 +74,18 @@ public class UserAuthController : Controller
             return Unauthorized(new BaseStatusResponse
             {
                 Completed = false,
-                Status = "Failed",
                 Message = "Refresh token not found in cookies."
             });
         }
+        /*
         try
         {
-            // await RevokeAccessTokenAsync();
+            await RevokeAccessTokenAsync();
         }
         catch (Exception e)
         {
-            return BadRequest(new BaseStatusResponse
-            {
-                Completed = false,
-                Status = "Failed to read user Claims",
-                Message = $"Error while revoking access token. Exception: {e.Message}"
-            });
-        }
+            return SharedResponses.FailedRequest($"Error while revoking access token. Exception: {e.Message}");
+        }*/
         
         var refreshInfo = await _authService.TryRefreshUsersTokens(refreshToken);
         if (refreshInfo.User == null)
@@ -108,7 +93,6 @@ public class UserAuthController : Controller
             return Unauthorized(new BaseStatusResponse
             {
                 Completed = false,
-                Status = "Failed",
                 Message = refreshInfo.errorMsg
             });
         }
@@ -133,7 +117,6 @@ public class UserAuthController : Controller
         {
             return Unauthorized(new BaseStatusResponse
             {
-                Status = "Failed",
                 Message = "Access token is invalid.",
                 Completed = false
             });
@@ -142,13 +125,7 @@ public class UserAuthController : Controller
         // await RevokeAccessTokenAsync();
         await _authService.RemoveRefreshTokenAsync(userId);
         
-        var res = new BaseStatusResponse
-        {
-            Status = "Success",
-            Message = "User successfully logged out.",
-            Completed = true
-        };
-        return Ok(res);
+        return SharedResponses.SuccessRequest("User successfully logged out.");
     }
     
     /// <summary>
@@ -164,12 +141,7 @@ public class UserAuthController : Controller
         
         if (userIdClaim == null)
         {
-            return BadRequest(new BaseStatusResponse
-            {
-                Status = "Failed",
-                Message = "Access token is invalid.",
-                Completed = false
-            });
+            return SharedResponses.FailedRequest("Access token is invalid.");
         }
         var userId = new Guid(userIdClaim.Value);
         
@@ -177,13 +149,7 @@ public class UserAuthController : Controller
         await _authService.RemoveRefreshTokenAsync(userId);
         await _userService.TryRemoveAsync(userId);
         
-        var res = new BaseStatusResponse
-        {
-            Status = "Success",
-            Message = "User successfully deleted.",
-            Completed = true
-        };
-        return Ok(res);
+        return SharedResponses.SuccessRequest("User successfully deleted.");
     }
     
     /// <summary>
@@ -196,78 +162,71 @@ public class UserAuthController : Controller
     {
         if (User.Identity!.IsAuthenticated)
         {
-            return BadRequest(new BaseStatusResponse
-            {
-                Completed = false,
-                Status = "Failed",
-                Message = "User is already authenticated."
-            });
+            return SharedResponses.FailedRequest("User is already authenticated.");
         }
-
-        var users = await _userService.GetAsync(new DataQueryParams<User>());
-        Expression<Func<UserRole, bool>> roleExp = r => r.IsAdmin == false && r.CanEditOthersEvents == false;
-        if (users.Length == 0)
-        {
-            roleExp = r => r.IsAdmin == true;
-        }
-        var role = await _roleService.GetAsync(new DataQueryParams<UserRole>
-        {
-            Expression = roleExp
-        });
-        
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Phone = "",
-            Fio = dto.Fio,
-            Email = dto.Email,
-            PasswordHash = PasswordHelper.HashPassword(dto.Password),
-            RoleId = role[0].Id,
-            UserStatus = dto.Status ?? "",
-            Description = "",
-            City = dto.City ?? "",
-            AvatarImageFilepath = ""
-        };
         var foundUsers = await _userService.GetAsync(new DataQueryParams<User>
         {
-            Expression = u => u.Email == user.Email
+            Expression = u => u.Email == dto.Email
         });
         if (foundUsers.Length > 0)
         {
-            return BadRequest(new RegisterResponse
-            {
-                Status = "Failed",
-                Message = "User with that email is already registered.",
-                UserId = null,
-                Completed = false,
-                AccessToken = string.Empty
-            });
+            return SharedResponses.FailedRequest("User with that email is already registered.");
         }
+        
+        var calendarSettings = new CalendarSettings
+        {
+            Id = Guid.NewGuid(),
+            ServerUrl = "",
+            Login = "",
+            Password = ""
+        };
+        await _calendarSettingsService.CreateAsync(calendarSettings);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Email = dto.Email,
+            PasswordHash = PasswordHelper.HashPassword(dto.Password),
+            CalendarSettingsId = calendarSettings.Id,
+            TutorId = null,
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            Patronymic = dto.Patronymic
+        };
+        Guid? tutorId = null;
+        if (dto.IsTutor)
+        {
+            var tutor = new Tutor
+            {
+                Id = Guid.NewGuid(),
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Patronymic = dto.Patronymic
+            };
+            user.TutorId = tutor.Id;
+            await _tutorService.CreateAsync(tutor);
+            tutorId = tutor.Id;
+        }
+        
         try
         {
             var registerInfo = await _authService.RegisterUserOrThrowAsync(user);
-            
-            var res = new RegisterResponse
+            WriteRefreshTokenToCookies(registerInfo.RefreshToken);
+            return Ok(new RegisterResponse
             {
-                Status = "Success",
                 Message = "User successfully registered.",
                 UserId = registerInfo.User.Id,
                 Completed = true,
                 AccessToken = registerInfo.AccessToken
-            };
-            WriteRefreshTokenToCookies(registerInfo.RefreshToken);
-            return Ok(res);
+            });
         }
         catch (Exception e)
         {
-            return StatusCode(500, new RegisterResponse
+            await _calendarSettingsService.TryRemoveAsync(calendarSettings.Id);
+            if (tutorId.HasValue)
             {
-                Status = "Failed",
-                Message = $"Registration failed. Info: {e.Message}",
-                UserId = null,
-                Completed = false,
-                AccessToken = string.Empty
-            });
+                await _tutorService.TryRemoveAsync(tutorId.Value);
+            }
+            return SharedResponses.FailedRequest($"Registration failed. Info: {e.Message}");
         }
     }
     

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CoffeeEvents.Controllers.Authorization.Requests;
+namespace AlphaProjectManager.Controllers.Authorization.Requests;
 
 public class RegisterRequest
 {
@@ -10,9 +10,11 @@ public class RegisterRequest
     [DataType(DataType.Password)]
     public required string Password { get; set; }
     
-    public required string Fio { get; set; }
+    public required bool IsTutor { get; set; }
     
-    public string? City { get; set; }
+    public required string FirstName { get; set; }
+
+    public string? LastName { get; set; } = "";
     
-    public string? Status { get; set; }
+    public string? Patronymic { get; set; } = "";
 }

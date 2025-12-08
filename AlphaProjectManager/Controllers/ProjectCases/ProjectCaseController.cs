@@ -6,7 +6,9 @@ using AlphaProjectManager.Controllers.TestController.Responses;
 using AlphaProjectManager.Controllers.Utility;
 using Application.DataQuery;
 using Application.Services;
+using Domain;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,7 +61,11 @@ public class ProjectCaseController : ControllerBase
         var caseIds = foundCases.Select(c => c.Id).ToArray();
         var caseVotesMap = (await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
-            Expression = v => caseIds.Contains(v.CaseId)
+            Expression = v => caseIds.Contains(v.CaseId),
+            IncludeParams = new IncludeParams<CaseVote>
+            {
+                IncludeProperties = [v => v.User]
+            }
         })).GroupBy(v => v.CaseId)
         .ToDictionary(
             g => foundCases.First(a => a.Id == g.Key), 
@@ -97,7 +103,11 @@ public class ProjectCaseController : ControllerBase
         var foundCase = foundCases[0];
         var votes = await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
-            Expression = v => v.CaseId == foundCase.Id
+            Expression = v => v.CaseId == foundCase.Id,
+            IncludeParams = new IncludeParams<CaseVote>
+            {
+                IncludeProperties = [v => v.User]
+            }
         });
         return Ok(ProjectCaseBriefResponse.FromProjectCase(foundCase, votes));
     }
@@ -183,5 +193,84 @@ public class ProjectCaseController : ControllerBase
         foundCase.UpdatedTime = DateTime.Now.ToUniversalTime();
         await _caseService.UpdateAsync(foundCase);
         return Ok(ProjectCaseFullResponse.FromProjectCase(foundCase));
+    }
+    
+    /// <summary>
+    /// Проголосовать за кейс
+    /// </summary>
+    [HttpPost("{caseId:guid}/vote")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VoteForCase([FromRoute] Guid caseId, [FromBody] CaseVoteRequest dto)
+    {
+        var foundCase = await _caseService.GetByIdOrDefaultAsync(caseId);
+        if (foundCase == null)
+        {
+            return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
+        }
+        if (!TryGetUserId(out var userId))
+        {
+            return SharedResponses.FailedRequest("User's claim with ID not found.");
+        }
+        var existingVote = await _votesService.GetAsync(new DataQueryParams<CaseVote>
+        {
+            Expression = v => v.CaseId == caseId && v.UserId == userId
+        });
+        if (existingVote.Length > 0)
+        {
+            return SharedResponses.FailedRequest("User already voted for this case.");
+        }
+        var vote = new CaseVote
+        {
+            Id = Guid.NewGuid(),
+            CaseId = caseId,
+            UserId = userId!.Value,
+            ReactionType = dto.ReactionType
+        };
+        await _votesService.CreateAsync(vote);
+        return SharedResponses.SuccessRequest("Voted.");
+    }
+    
+    /// <summary>
+    /// Отменить голос за кейс
+    /// </summary>
+    [HttpPost("{caseId:guid}/unvote")]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RemoveVoteFromCase([FromRoute] Guid caseId, [FromBody] UpdateCaseRequest dto)
+    {
+        if (!TryGetUserId(out var userId))
+        {
+            return SharedResponses.FailedRequest("User's claim with ID not found.");
+        }
+        var existingVote = await _votesService.GetAsync(new DataQueryParams<CaseVote>
+        {
+            Expression = v => v.CaseId == caseId && v.UserId == userId
+        });
+        if (existingVote.Length == 0)
+        {
+            return SharedResponses.FailedRequest("User's vote for this case not found.");
+        }
+        await _votesService.TryRemoveAsync(existingVote[0].Id);
+        return SharedResponses.SuccessRequest("Vote removed.");
+    }
+
+    private bool TryGetUserId(out Guid? userId)
+    {
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == AuthOptions.ClaimTypeUserId);
+        userId = null;
+        if (userIdClaim == null)
+        {
+            return false;
+        }
+
+        if (Guid.TryParse(userIdClaim.Value, out var parsedId))
+        {
+            userId = parsedId;
+            return true;
+        }
+        return false;
     }
 }

@@ -19,6 +19,8 @@ public class User : IHasId
     
     public string? Patronymic { get; set; } = "";
     
+    public string FullName { get; private set; } = "";
+    
     public required Guid CalendarSettingsId { get; set; }
     [ForeignKey("CalendarSettingsId")] 
     public CalendarSettings CalendarSettings { get; set; } = null!;

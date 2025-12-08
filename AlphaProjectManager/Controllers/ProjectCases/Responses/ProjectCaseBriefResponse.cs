@@ -22,7 +22,7 @@ public class ProjectCaseBriefResponse
     
     public required DateTime UpdatedAt { get; set; }
     
-    public required Dictionary<CaseReactionType, List<Guid>> Votes { get; set; }
+    public required Dictionary<CaseReactionType, List<CaseVoteResponse>> Votes { get; set; }
 
     public static ProjectCaseBriefResponse FromProjectCase(ProjectCase projectCase, CaseVote[] votes)
     {
@@ -39,7 +39,11 @@ public class ProjectCaseBriefResponse
             Votes = votes.GroupBy(v => v.ReactionType)
                 .ToDictionary(
                     g => g.Key, 
-                    g => g.Select(v => v.UserId).ToList())
+                    g => g.Select(v => new CaseVoteResponse
+                    {
+                        UserId = v.UserId,
+                        FullName = v.User.FullName
+                    }).ToList())
         };
     }
 }

@@ -209,7 +209,7 @@ public class ProjectCaseController : ControllerBase
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
-        if (!TryGetUserId(out var userId))
+        if (!ClaimsHelper.TryGetUserId(User, out var userId))
         {
             return SharedResponses.FailedRequest("User's claim with ID not found.");
         }
@@ -241,7 +241,7 @@ public class ProjectCaseController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> RemoveVoteFromCase([FromRoute] Guid caseId, [FromBody] UpdateCaseRequest dto)
     {
-        if (!TryGetUserId(out var userId))
+        if (!ClaimsHelper.TryGetUserId(User, out var userId))
         {
             return SharedResponses.FailedRequest("User's claim with ID not found.");
         }
@@ -255,22 +255,5 @@ public class ProjectCaseController : ControllerBase
         }
         await _votesService.TryRemoveAsync(existingVote[0].Id);
         return SharedResponses.SuccessRequest("Vote removed.");
-    }
-
-    private bool TryGetUserId(out Guid? userId)
-    {
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == AuthOptions.ClaimTypeUserId);
-        userId = null;
-        if (userIdClaim == null)
-        {
-            return false;
-        }
-
-        if (Guid.TryParse(userIdClaim.Value, out var parsedId))
-        {
-            userId = parsedId;
-            return true;
-        }
-        return false;
     }
 }

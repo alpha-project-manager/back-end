@@ -12,12 +12,12 @@ public class MeetingService : BaseService<Meeting>
     private readonly BaseService<TutorAttendance> _tutorAttendanceService;
     private readonly BaseService<StudentAttendance> _studentAttendanceService;
     private readonly BaseService<TodoTask> _tasksService;
-    private readonly ProjectsService _projectService;
+    private readonly BaseService<Project> _projectService;
     private readonly BaseService<StudentInProject> _studentsInProjectService;
 
     public MeetingService(IDbContextFactory<ProjectManagerDbContext> dbContextFactory,
         BaseService<TutorAttendance> tutorAttendanceService, BaseService<StudentAttendance> studentAttendanceService,
-        BaseService<TodoTask> tasksService, ProjectsService projectService, BaseService<StudentInProject> studentsInProjectService) : base(dbContextFactory)
+        BaseService<TodoTask> tasksService, BaseService<Project> projectService, BaseService<StudentInProject> studentsInProjectService) : base(dbContextFactory)
     {
         _tutorAttendanceService = tutorAttendanceService;
         _studentAttendanceService = studentAttendanceService;

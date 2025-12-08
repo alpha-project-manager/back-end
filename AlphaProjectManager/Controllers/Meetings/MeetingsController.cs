@@ -2,6 +2,7 @@
 using AlphaProjectManager.Controllers.Meetings.Requests;
 using AlphaProjectManager.Controllers.Meetings.Responses;
 using AlphaProjectManager.Controllers.ProjectCases.Responses;
+using AlphaProjectManager.Controllers.Projects.Meetings.Responses;
 using AlphaProjectManager.Controllers.Shared;
 using Application.DataQuery;
 using Application.Services;

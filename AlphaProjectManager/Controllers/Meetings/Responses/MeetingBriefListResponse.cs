@@ -1,4 +1,6 @@
-﻿namespace AlphaProjectManager.Controllers.Meetings.Responses;
+﻿using AlphaProjectManager.Controllers.Projects.Meetings.Responses;
+
+namespace AlphaProjectManager.Controllers.Meetings.Responses;
 
 public class MeetingBriefListResponse
 {

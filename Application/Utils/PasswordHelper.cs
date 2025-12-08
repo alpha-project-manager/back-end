@@ -2,7 +2,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
-namespace Application.Utility;
+namespace Application.Utils;
 
 public static class PasswordHelper
 {

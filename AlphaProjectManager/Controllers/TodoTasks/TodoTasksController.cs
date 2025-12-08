@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AlphaProjectManager.Controllers.TodoTasks;
 
-[Microsoft.AspNetCore.Components.Route("/api/projects/{projectId:guid}/meetings/{meetingId:guid}/tasks")]
+[Route("/api/tasks")]
 public class TodoTasksController : ControllerBase
 {
     private readonly MeetingService _meetingService;
@@ -24,14 +24,14 @@ public class TodoTasksController : ControllerBase
     /// <summary>
     /// Создать новую задачу
     /// </summary>
-    [HttpPost]
+    [HttpPost("")]
     [ProducesResponseType(typeof(TodoTaskResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateNewTask([FromRoute] Guid meetingId, [FromBody] CreateTodoTaskRequest dto)
+    public async Task<IActionResult> CreateNewTask([FromBody] CreateTodoTaskRequest dto)
     {
         var task = new TodoTask
         {
             Id = Guid.NewGuid(),
-            MeetingId = meetingId,
+            MeetingId = dto.MeetingId,
             Title = dto.Title
         };
         await _tasksService.CreateAsync(task);

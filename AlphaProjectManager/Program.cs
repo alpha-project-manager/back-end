@@ -64,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalhost3000");
+app.UseCors("AllowLocalNet3000");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

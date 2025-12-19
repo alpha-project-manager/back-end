@@ -40,7 +40,6 @@ public class ApplicationController : ControllerBase
     [ProducesResponseType(typeof(ApplicationBriefListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetApplications([FromQuery] ApplicationStatus? status)
     {
-        // Берём все заявки (с учётом статуса)
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
         {
             Expression = status.HasValue ? appl => appl.Status == status : null,
@@ -52,8 +51,6 @@ public class ApplicationController : ControllerBase
 
         var applicationIds = foundApplications.Select(a => a.Id).ToArray();
 
-        // Берём только непрочитанные сообщения по найденным заявкам,
-        // но не фильтруем по ним сами заявки
         var unreadMessages = await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
         {
             Expression = m => !m.IsRead && applicationIds.Contains(m.ApplicationId)
@@ -88,7 +85,11 @@ public class ApplicationController : ControllerBase
     {
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
         {
-            Expression = appl => appl.Id == applicationId
+            Expression = appl => appl.Id == applicationId,
+            IncludeParams = new IncludeParams<ProjectApplication>
+            {
+                IncludeProperties = [appl => appl.ProjectCase]
+            }
         });
 
         if (foundApplications.Length == 0)
@@ -124,7 +125,9 @@ public class ApplicationController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateApplication([FromRoute] Guid applicationId, [FromBody] UpdateApplicationRequest dto)
+    public async Task<IActionResult> UpdateApplication(
+        [FromRoute] Guid applicationId,
+        [FromBody] UpdateApplicationRequest dto)
     {
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
         {
@@ -189,7 +192,9 @@ public class ApplicationController : ControllerBase
     [HttpPost($"{{{nameof(applicationId)}:guid}}/send-message")]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SendMessageForApplication([FromRoute] Guid applicationId, [FromBody] SendMessageRequest dto)
+    public async Task<IActionResult> SendMessageForApplication(
+        [FromRoute] Guid applicationId,
+        [FromBody] SendMessageRequest dto)
     {
         var application = await _applicationService.GetByIdOrDefaultAsync(applicationId);
         if (application == null)

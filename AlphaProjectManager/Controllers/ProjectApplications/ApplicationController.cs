@@ -21,15 +21,18 @@ public class ApplicationController : ControllerBase
     private readonly BaseService<ApplicationMessage> _messagesService;
     private readonly ITelegramNotifier _telegramNotifier;
 
-    public ApplicationController(BaseService<ProjectApplication> applicationService, BaseService<ApplicationQuestionAnswer> answerService,
-        BaseService<ApplicationMessage> messagesService, ITelegramNotifier telegramNotifier)
+    public ApplicationController(
+        BaseService<ProjectApplication> applicationService,
+        BaseService<ApplicationQuestionAnswer> answerService,
+        BaseService<ApplicationMessage> messagesService,
+        ITelegramNotifier telegramNotifier)
     {
         _applicationService = applicationService;
         _answerService = answerService;
         _messagesService = messagesService;
         _telegramNotifier = telegramNotifier;
     }
-    
+
     /// <summary>
     /// Получить краткую информацию о всех заявках на кейсы
     /// </summary>
@@ -37,6 +40,7 @@ public class ApplicationController : ControllerBase
     [ProducesResponseType(typeof(ApplicationBriefListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetApplications([FromQuery] ApplicationStatus? status)
     {
+        // Берём все заявки (с учётом статуса)
         var foundApplications = await _applicationService.GetAsync(new DataQueryParams<ProjectApplication>
         {
             Expression = status.HasValue ? appl => appl.Status == status : null,
@@ -45,22 +49,35 @@ public class ApplicationController : ControllerBase
                 IncludeProperties = [appl => appl.ProjectCase]
             }
         });
+
         var applicationIds = foundApplications.Select(a => a.Id).ToArray();
-        var applicationMessagesMap = (await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
+
+        // Берём только непрочитанные сообщения по найденным заявкам,
+        // но не фильтруем по ним сами заявки
+        var unreadMessages = await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
         {
-            Expression = m => !m.IsRead,
-            Filters = [m => applicationIds.Contains(m.ApplicationId)]
-        })).GroupBy(m => m.ApplicationId)
-            .ToDictionary(
-                g => foundApplications.First(a => a.Id == g.Key), 
-                g => g.ToArray());
-        
+            Expression = m => !m.IsRead && applicationIds.Contains(m.ApplicationId)
+        });
+
+        var unreadByApplication = unreadMessages
+            .GroupBy(m => m.ApplicationId)
+            .ToDictionary(g => g.Key, g => g.ToArray());
+
+        var responses = foundApplications
+            .Select(application =>
+            {
+                unreadByApplication.TryGetValue(application.Id, out var msgs);
+                msgs ??= Array.Empty<ApplicationMessage>();
+                return ApplicationBriefResponse.FromApplication(application, msgs);
+            })
+            .ToArray();
+
         return Ok(new ApplicationBriefListResponse
         {
-            Applications = applicationMessagesMap.Select(kv => ApplicationBriefResponse.FromApplication(kv.Key, kv.Value)).ToArray()
+            Applications = responses
         });
     }
-    
+
     /// <summary>
     /// Получить полную информацию о заявке по id
     /// </summary>
@@ -73,29 +90,33 @@ public class ApplicationController : ControllerBase
         {
             Expression = appl => appl.Id == applicationId
         });
+
         if (foundApplications.Length == 0)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectApplication>(applicationId);
         }
 
         var foundApplication = foundApplications[0];
+
         var msgs = await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
         {
             Expression = msg => msg.ApplicationId == applicationId
         });
+
         foreach (var justReadMsg in msgs.Where(msg => !msg.IsRead))
         {
             justReadMsg.IsRead = true;
             await _messagesService.UpdateAsync(justReadMsg);
         }
+
         var answers = await _answerService.GetAsync(new DataQueryParams<ApplicationQuestionAnswer>
         {
             Expression = answer => answer.ApplicationId == applicationId
         });
-        
+
         return Ok(ApplicationResponse.FromDomainEntities(foundApplication, answers, msgs));
     }
-    
+
     /// <summary>
     /// Обновить информацию о заявке по id
     /// </summary>
@@ -109,16 +130,19 @@ public class ApplicationController : ControllerBase
         {
             Expression = appl => appl.Id == applicationId
         });
+
         if (foundApplications.Length == 0)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectApplication>(applicationId);
         }
+
         var application = foundApplications[0];
         dto.ApplyToApplication(application);
         await _applicationService.UpdateAsync(application);
+
         return SharedResponses.SuccessRequest("Application updated.");
     }
-    
+
     /// <summary>
     /// Удалить заявку по id
     /// </summary>
@@ -132,27 +156,33 @@ public class ApplicationController : ControllerBase
         {
             Expression = appl => appl.Id == applicationId
         });
+
         if (foundApplications.Length == 0)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectApplication>(applicationId);
         }
+
         var msgs = await _messagesService.GetAsync(new DataQueryParams<ApplicationMessage>
         {
             Expression = msg => msg.ApplicationId == applicationId
         });
+
         var answers = await _answerService.GetAsync(new DataQueryParams<ApplicationQuestionAnswer>
         {
             Expression = answer => answer.ApplicationId == applicationId
         });
+
         await _messagesService.RemoveRangeAsync(msgs);
         await _answerService.RemoveRangeAsync(answers);
+
         if (await _applicationService.TryRemoveAsync(applicationId))
         {
             return SharedResponses.SuccessRequest();
         }
+
         return SharedResponses.FailedRequest("Failed to remove ProjectApplication from database");
     }
-    
+
     /// <summary>
     /// Отправить сообщение по заявке с указанным id
     /// </summary>
@@ -176,9 +206,10 @@ public class ApplicationController : ControllerBase
             Timestamp = DateTime.Now.ConvertToTimestamp(),
             IsRead = true
         };
+
         await _messagesService.CreateAsync(msg);
         await _telegramNotifier.SendMsgFromTutorsAsync(application.ChatId, dto.Content);
-        
+
         return Ok(new BaseStatusResponse
         {
             Completed = true,

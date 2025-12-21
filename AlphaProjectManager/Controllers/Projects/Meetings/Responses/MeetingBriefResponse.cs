@@ -17,8 +17,10 @@ public class MeetingBriefResponse
     public int CompletedTasks { get; set; }
     
     public int? ResultMark { get; set; }
+    
+    public string? TeamTitle { get; set; }
 
-    public static MeetingBriefResponse FromMeeting(Meeting meeting, TodoTask[] tasks)
+    public static MeetingBriefResponse FromMeeting(Meeting meeting, TodoTask[] tasks, string? teamTitle)
     {
         var dtStr = meeting.DateTime.ToString("dd.MM.yyyy HH:mm");
         return new MeetingBriefResponse
@@ -29,7 +31,8 @@ public class MeetingBriefResponse
             IsFinished = meeting.IsFinished,
             TotalTasks = tasks.Length,
             CompletedTasks = tasks.Count(t => t.IsCompleted),
-            ResultMark = meeting.ResultMark
+            ResultMark = meeting.ResultMark,
+            TeamTitle = teamTitle
         };
     }
 }

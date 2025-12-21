@@ -163,7 +163,7 @@ public class MeetingService : BaseService<Meeting>
         };
     }
     
-    public async Task<Dictionary<Meeting, TodoTask[]>> GetMeetingsForProject(Guid projectId)
+    public async Task<List<(Meeting Meeting, TodoTask[] Tasks, string TeamTitle)>> GetMeetingsForProject(Guid projectId)
     {
         var meetings = await base.GetAsync(new DataQueryParams<Meeting>
         {
@@ -174,9 +174,29 @@ public class MeetingService : BaseService<Meeting>
                 Ascending = false
             }
         });
-        var result = new Dictionary<Meeting, TodoTask[]>();
+        return await GetTodoTasksFromMeetings(meetings);
+    }
+
+    public async Task<List<(Meeting Meeting, TodoTask[] Tasks, string TeamTitle)>> GetUpcomingMeetings()
+    {
+        var meetings = await base.GetAsync(new DataQueryParams<Meeting>
+        {
+            Expression = m => !m.IsFinished && m.DateTime > DateTime.Now.ToUniversalTime(),
+            Sorting = new SortingParams<Meeting>
+            {
+                OrderBy = m => m.DateTime,
+                Ascending = false
+            }
+        });
+        return await GetTodoTasksFromMeetings(meetings);
+    }
+
+    private async Task<List<(Meeting Meeting, TodoTask[] Tasks, string TeamTitle)>> GetTodoTasksFromMeetings(Meeting[] meetings)
+    {
+        var result = new List<(Meeting Meeting, TodoTask[] Tasks, string TeamTitle)>();
         foreach (var meeting in meetings)
         {
+            var project = await _projectService.GetByIdOrDefaultAsync(meeting.ProjectId);
             var tasks = await _tasksService.GetAsync(new DataQueryParams<TodoTask>
             {
                 Expression = t => t.MeetingId == meeting.Id,
@@ -185,11 +205,11 @@ public class MeetingService : BaseService<Meeting>
                     OrderBy = t => t.IsCompleted
                 }
             });
-            result[meeting] = tasks;
+            result.Add(new ValueTuple<Meeting, TodoTask[], string>(meeting, tasks, project?.TeamTitle ?? ""));
         }
         return result;
     }
-
+    
     public async Task<FullMeetingInfo?> GetFullMeetingInfoById(Guid meetingId)
     {
         var meeting = await base.GetByIdOrDefaultAsync(meetingId);
@@ -199,11 +219,19 @@ public class MeetingService : BaseService<Meeting>
         }
         var tutorAttendances = await _tutorAttendanceService.GetAsync(new DataQueryParams<TutorAttendance>
         {
-            Expression = t => t.MeetingId == meetingId
+            Expression = t => t.MeetingId == meetingId,
+            IncludeParams = new IncludeParams<TutorAttendance>
+            {
+                IncludeProperties = [a => a.Tutor]
+            }
         });
         var studentAttendances = await _studentAttendanceService.GetAsync(new DataQueryParams<StudentAttendance>
         {
-            Expression = t => t.MeetingId == meetingId
+            Expression = t => t.MeetingId == meetingId,
+            IncludeParams = new IncludeParams<StudentAttendance>
+            {
+                IncludeProperties = [a => a.Student]
+            }
         });
         var todoTasks = await _tasksService.GetAsync(new DataQueryParams<TodoTask>
         {

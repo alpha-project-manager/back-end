@@ -4,6 +4,7 @@ using AlphaProjectManager.Controllers.Meetings.Responses;
 using AlphaProjectManager.Controllers.ProjectCases.Responses;
 using AlphaProjectManager.Controllers.Projects.Meetings.Responses;
 using AlphaProjectManager.Controllers.Shared;
+using AlphaProjectManager.Controllers.Utility;
 using Application.DataQuery;
 using Application.Services;
 using Application.Services.Meetings;
@@ -12,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AlphaProjectManager.Controllers.Meetings;
 
-[Route("/api/projects/{projectId:guid}/meetings")]
+[Route("/api/meetings")]
 public class MeetingsController : ControllerBase
 {
     private readonly MeetingService _meetingService;
@@ -25,7 +26,7 @@ public class MeetingsController : ControllerBase
     /// <summary>
     /// Создать новое собрание
     /// </summary>
-    [HttpPost]
+    [HttpPost("/in-project/{projectId:guid}")]
     [ProducesResponseType(typeof(MeetingFullResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateNewMeeting([FromRoute] Guid projectId, [FromBody] CreateMeetingRequest dto)
@@ -40,16 +41,30 @@ public class MeetingsController : ControllerBase
     }
     
     /// <summary>
+    /// Получить ближайшие собрания для пользователя
+    /// </summary>
+    [HttpGet("upcoming")]
+    [ProducesResponseType(typeof(MeetingBriefListResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUpcomingMeetingsBrief()
+    {
+        var meetings = await _meetingService.GetUpcomingMeetings();
+        return Ok(new MeetingBriefListResponse
+        {
+            Meetings = meetings.Select(g => MeetingBriefResponse.FromMeeting(g.Meeting, g.Tasks, g.TeamTitle)).ToList()
+        });
+    }
+    
+    /// <summary>
     /// Получить краткую информацию о всех собраниях
     /// </summary>
-    [HttpGet]
+    [HttpGet("/in-project/{projectId:guid}")]
     [ProducesResponseType(typeof(MeetingBriefListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllBrief([FromRoute] Guid projectId)
     {
         var meetings = await _meetingService.GetMeetingsForProject(projectId);
         return Ok(new MeetingBriefListResponse
         {
-            Meetings = meetings.Select(kv => MeetingBriefResponse.FromMeeting(kv.Key, kv.Value)).ToList()
+            Meetings = meetings.Select(g => MeetingBriefResponse.FromMeeting(g.Meeting, g.Tasks, g.TeamTitle)).ToList()
         });
     }
     

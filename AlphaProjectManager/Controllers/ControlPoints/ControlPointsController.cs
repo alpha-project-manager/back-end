@@ -49,7 +49,7 @@ public class ControlPointsController : ControllerBase
     [ProducesResponseType(typeof(ControlPointResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateControlPoint([FromBody] CreateControlPointRequest dto)
     {
-        var result = await _controlPointService.CreateNewControlPoint(dto.CreateInAllProjects);
+        var result = await _controlPointService.CreateNewControlPoint(dto.Title, dto.Date, dto.CreateInAllProjects);
         return Ok(ControlPointResponse.FromControlPoint(result));
     }
     

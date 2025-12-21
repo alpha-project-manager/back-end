@@ -57,13 +57,15 @@ public class UserAuthController : Controller
             UserId = loginInfo.User.Id,
             Message = "User successfully authorized.",
             Completed = true,
-            AccessToken = loginInfo.AccessToken
+            AccessToken = loginInfo.AccessToken,
+            Fullname = loginInfo.User.FullName
         });
     }
     
     /// <summary>
     /// Обновление access и refresh токенов пользователя
     /// </summary>
+    [Authorize]
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(RefreshResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]

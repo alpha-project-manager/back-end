@@ -13,6 +13,8 @@ public class ProjectFullResponse
     
     public Guid? CaseId { get; set; }
     
+    public string? CaseTitle { get; set; }
+    
     public required string Title { get; set; }
     
     public required string Description { get; set; }
@@ -36,12 +38,13 @@ public class ProjectFullResponse
     public required List<MeetingBriefResponse> Meetings { get; set; }
 
     public static ProjectFullResponse FromDomainEntities(Project project, ControlPointInProject[] controlPoints,
-        Student[] students, Dictionary<Meeting, TodoTask[]>  meetings)
+        Student[] students, List<(Meeting Meeting, TodoTask[] Tasks, string TeamTitle)>  meetings)
     {
         return new ProjectFullResponse
         {
             Id = project.Id,
             CaseId = project.CaseId,
+            CaseTitle = project.Case?.Title ?? "",
             Title = project.Title,
             Description = project.Description,
             MeetingUrl = project.MeetingUrl,
@@ -49,10 +52,17 @@ public class ProjectFullResponse
             Status = project.Status,
             Semester = project.Semester,
             AcademicYear = project.AcademicYear,
-            Tutor = project.Tutor == null ? null : TutorResponse.FromTutor(project.Tutor),
-            ControlPoints = controlPoints.Select(ControlPointProjectResponse.FromControlPoint).ToList(),
-            Students = students.Select(StudentResponse.FromStudent).ToList(),
-            Meetings = meetings.Select(kv => MeetingBriefResponse.FromMeeting(kv.Key, kv.Value)).ToList()
+            Tutor = project.Tutor == null
+                ? null
+                : TutorResponse.FromTutor(project.Tutor),
+            ControlPoints = controlPoints.Select(ControlPointProjectResponse.FromControlPoint)
+                .ToList(),
+            Students = students.Select(StudentResponse.FromStudent)
+                .ToList(),
+            Meetings = meetings.Select(kv => MeetingBriefResponse.FromMeeting(kv.Meeting,
+                    kv.Tasks,
+                    kv.TeamTitle))
+                .ToList()
         };
     }
 }

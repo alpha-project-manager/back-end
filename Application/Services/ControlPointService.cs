@@ -19,13 +19,13 @@ public class ControlPointService : BaseService<ControlPoint>
         _projectsService = projectsService;
     }
 
-    public async Task<ControlPoint> CreateNewControlPoint(bool createInAllInWorkProjects)
+    public async Task<ControlPoint> CreateNewControlPoint(string title, DateOnly date, bool createInAllInWorkProjects)
     {
         var point = new ControlPoint
         {
             Id = Guid.NewGuid(),
-            Title = "Контрольная точка",
-            Date = DateTime.Today
+            Title = title,
+            Date = date.ToDateTime(new TimeOnly()).ToUniversalTime()
         };
         await base.CreateAsync(point);
         if (createInAllInWorkProjects)
@@ -64,7 +64,7 @@ public class ControlPointService : BaseService<ControlPoint>
             return null;
         }
 
-        point.Date = date.ToDateTime(new TimeOnly());
+        point.Date = date.ToDateTime(new TimeOnly()).ToUniversalTime();
         point.Title = title ?? "";
         await base.UpdateAsync(point);
         

@@ -149,7 +149,7 @@ public class ProjectsController : ControllerBase
         var foundProjects  = await _projectService.GetAsync(new DataQueryParams<Project>
         {
             Expression = p => p.Id == projectId,
-            IncludeParams = new IncludeParams<Project> { IncludeProperties = [p => p.Tutor] }
+            IncludeParams = new IncludeParams<Project> { IncludeProperties = [p => p.Tutor, p => p.Case] }
         });
         if (foundProjects.Length == 0)
         {

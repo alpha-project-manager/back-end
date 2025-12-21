@@ -30,6 +30,11 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
+        options.AddPolicy("AllowLocalNet3000",
+        policy => policy.WithOrigins("http://192.168.1.106:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 builder.Services.AddControllers();
@@ -59,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowLocalhost3000");
+app.UseCors("AllowLocalNet3000");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

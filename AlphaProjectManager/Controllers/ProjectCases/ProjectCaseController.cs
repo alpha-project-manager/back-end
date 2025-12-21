@@ -6,9 +6,7 @@ using AlphaProjectManager.Controllers.TestController.Responses;
 using AlphaProjectManager.Controllers.Utility;
 using Application.DataQuery;
 using Application.Services;
-using Domain;
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,19 +18,24 @@ public class ProjectCaseController : ControllerBase
     private readonly BaseService<ProjectCase> _caseService;
     private readonly BaseService<CaseVote> _votesService;
 
-    public ProjectCaseController(BaseService<ProjectCase> caseService, BaseService<CaseVote> votesService)
+    public ProjectCaseController(
+        BaseService<ProjectCase> caseService,
+        BaseService<CaseVote> votesService)
     {
         _caseService = caseService;
         _votesService = votesService;
     }
-    
+
     /// <summary>
     /// Получить краткую информацию о всех кейсах
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ProjectCaseListResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllBrief([FromQuery] int? skip, [FromQuery] int? take, 
-        [FromQuery] Guid? tutorId, [FromQuery] string? search)
+    public async Task<IActionResult> GetAllBrief(
+        [FromQuery] int? skip,
+        [FromQuery] int? take,
+        [FromQuery] Guid? tutorId,
+        [FromQuery] string? search)
     {
         var query = new DataQueryParams<ProjectCase>
         {
@@ -48,37 +51,63 @@ public class ProjectCaseController : ControllerBase
                 Ascending = false
             }
         };
+
         if (tutorId.HasValue)
         {
             query.Filters.Add(p => p.TutorId == tutorId);
         }
+
         if (!string.IsNullOrWhiteSpace(search))
         {
-            query.Expression = p => EF.Functions.ILike(p.Title, $"%{search}%") 
-                                    || EF.Functions.ILike(p.Description, $"%{search}%");
+            query.Expression = p =>
+                EF.Functions.ILike(p.Title, $"%{search}%") ||
+                EF.Functions.ILike(p.Description, $"%{search}%");
         }
+
         var foundCases = await _caseService.GetAsync(query);
+
+        if (foundCases.Length == 0)
+        {
+            return Ok(new ProjectCaseListResponse
+            {
+                Cases = Array.Empty<ProjectCaseBriefResponse>(),
+                Completed = true,
+                Message = ""
+            });
+        }
+
         var caseIds = foundCases.Select(c => c.Id).ToArray();
-        var caseVotesMap = (await _votesService.GetAsync(new DataQueryParams<CaseVote>
+
+        var votes = await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
             Expression = v => caseIds.Contains(v.CaseId),
             IncludeParams = new IncludeParams<CaseVote>
             {
                 IncludeProperties = [v => v.User]
             }
-        })).GroupBy(v => v.CaseId)
-        .ToDictionary(
-            g => foundCases.First(a => a.Id == g.Key), 
-            g => g.ToArray());
-        
+        });
+
+        var votesByCaseId = votes
+            .GroupBy(v => v.CaseId)
+            .ToDictionary(g => g.Key, g => g.ToArray());
+
+        var cases = foundCases
+            .Select(c =>
+            {
+                votesByCaseId.TryGetValue(c.Id, out var caseVotes);
+                caseVotes ??= Array.Empty<CaseVote>();
+                return ProjectCaseBriefResponse.FromProjectCase(c, caseVotes);
+            })
+            .ToArray();
+
         return Ok(new ProjectCaseListResponse
         {
-            Cases = caseVotesMap.Select(kv => ProjectCaseBriefResponse.FromProjectCase(kv.Key, kv.Value)).ToArray(),
+            Cases = cases,
             Completed = true,
             Message = ""
         });
     }
-    
+
     /// <summary>
     /// Получить краткую информацию о кейсе по id
     /// </summary>
@@ -95,12 +124,14 @@ public class ProjectCaseController : ControllerBase
                 IncludeProperties = [c => c.Tutor]
             }
         });
+
         if (foundCases.Length == 0)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
 
         var foundCase = foundCases[0];
+
         var votes = await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
             Expression = v => v.CaseId == foundCase.Id,
@@ -109,9 +140,10 @@ public class ProjectCaseController : ControllerBase
                 IncludeProperties = [v => v.User]
             }
         });
+
         return Ok(ProjectCaseBriefResponse.FromProjectCase(foundCase, votes));
     }
-    
+
     /// <summary>
     /// Получить полную информацию о кейсе по id
     /// </summary>
@@ -128,17 +160,19 @@ public class ProjectCaseController : ControllerBase
                 IncludeProperties = [c => c.Tutor]
             }
         });
+
         if (foundCases.Length == 0)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
+
         return Ok(ProjectCaseFullResponse.FromProjectCase(foundCases[0]));
     }
-    
+
     /// <summary>
     /// Создать новый кейс
     /// </summary>
-    [HttpPost()]
+    [HttpPost]
     [ProducesResponseType(typeof(ProjectCaseFullResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateNewCase()
     {
@@ -149,13 +183,14 @@ public class ProjectCaseController : ControllerBase
             MaxTeams = 0,
             AcceptedTeams = 0,
             IsActive = false,
-            UpdatedTime = DateTime.Now.ToUniversalTime()
+            UpdatedTime = DateTime.UtcNow
         };
+
         await _caseService.CreateAsync(newCase);
-        
+
         return Ok(ProjectCaseFullResponse.FromProjectCase(newCase));
     }
-    
+
     /// <summary>
     /// Удалить кейс по id
     /// </summary>
@@ -165,36 +200,44 @@ public class ProjectCaseController : ControllerBase
     public async Task<IActionResult> DeleteCase([FromRoute] Guid caseId)
     {
         var result = await _caseService.TryRemoveAsync(caseId);
+
         if (!result)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
+
         return Ok(new BaseStatusResponse
         {
             Completed = result,
             Message = ""
         });
     }
-    
+
     /// <summary>
     /// Обновить информацию о кейсе
     /// </summary>
     [HttpPut("{caseId:guid}")]
     [ProducesResponseType(typeof(ProjectCaseFullResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateCase([FromRoute] Guid caseId, [FromBody] UpdateCaseRequest dto)
+    public async Task<IActionResult> UpdateCase(
+        [FromRoute] Guid caseId,
+        [FromBody] UpdateCaseRequest dto)
     {
         var foundCase = await _caseService.GetByIdOrDefaultAsync(caseId);
+
         if (foundCase == null)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
+
         DtoConverter.MapPropertiesValues(dto, foundCase);
-        foundCase.UpdatedTime = DateTime.Now.ToUniversalTime();
+        foundCase.UpdatedTime = DateTime.UtcNow;
+
         await _caseService.UpdateAsync(foundCase);
+
         return Ok(ProjectCaseFullResponse.FromProjectCase(foundCase));
     }
-    
+
     /// <summary>
     /// Проголосовать за кейс
     /// </summary>
@@ -202,25 +245,32 @@ public class ProjectCaseController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> VoteForCase([FromRoute] Guid caseId, [FromBody] CaseVoteRequest dto)
+    public async Task<IActionResult> VoteForCase(
+        [FromRoute] Guid caseId,
+        [FromBody] CaseVoteRequest dto)
     {
         var foundCase = await _caseService.GetByIdOrDefaultAsync(caseId);
+
         if (foundCase == null)
         {
             return SharedResponses.NotFoundObjectResponse<ProjectCase>(caseId);
         }
+
         if (!ClaimsHelper.TryGetUserId(User, out var userId))
         {
             return SharedResponses.FailedRequest("User's claim with ID not found.");
         }
+
         var existingVote = await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
             Expression = v => v.CaseId == caseId && v.UserId == userId
         });
+
         if (existingVote.Length > 0)
         {
             return SharedResponses.FailedRequest("User already voted for this case.");
         }
+
         var vote = new CaseVote
         {
             Id = Guid.NewGuid(),
@@ -228,10 +278,12 @@ public class ProjectCaseController : ControllerBase
             UserId = userId!.Value,
             ReactionType = dto.ReactionType
         };
+
         await _votesService.CreateAsync(vote);
+
         return SharedResponses.SuccessRequest("Voted.");
     }
-    
+
     /// <summary>
     /// Отменить голос за кейс
     /// </summary>
@@ -239,21 +291,26 @@ public class ProjectCaseController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RemoveVoteFromCase([FromRoute] Guid caseId, [FromBody] UpdateCaseRequest dto)
+    public async Task<IActionResult> RemoveVoteFromCase(
+        [FromRoute] Guid caseId)
     {
         if (!ClaimsHelper.TryGetUserId(User, out var userId))
         {
             return SharedResponses.FailedRequest("User's claim with ID not found.");
         }
+
         var existingVote = await _votesService.GetAsync(new DataQueryParams<CaseVote>
         {
             Expression = v => v.CaseId == caseId && v.UserId == userId
         });
+
         if (existingVote.Length == 0)
         {
             return SharedResponses.FailedRequest("User's vote for this case not found.");
         }
+
         await _votesService.TryRemoveAsync(existingVote[0].Id);
+
         return SharedResponses.SuccessRequest("Vote removed.");
     }
 }

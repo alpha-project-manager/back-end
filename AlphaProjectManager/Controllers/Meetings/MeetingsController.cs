@@ -26,7 +26,7 @@ public class MeetingsController : ControllerBase
     /// <summary>
     /// Создать новое собрание
     /// </summary>
-    [HttpPost("/in-project/{projectId:guid}")]
+    [HttpPost("in-project/{projectId:guid}")]
     [ProducesResponseType(typeof(MeetingFullResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateNewMeeting([FromRoute] Guid projectId, [FromBody] CreateMeetingRequest dto)
@@ -57,7 +57,7 @@ public class MeetingsController : ControllerBase
     /// <summary>
     /// Получить краткую информацию о всех собраниях
     /// </summary>
-    [HttpGet("/in-project/{projectId:guid}")]
+    [HttpGet("in-project/{projectId:guid}")]
     [ProducesResponseType(typeof(MeetingBriefListResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllBrief([FromRoute] Guid projectId)
     {

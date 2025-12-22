@@ -26,7 +26,7 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Обновить настройки подключения календаря
     /// </summary>
-    [HttpPut("/calendar-settings")]
+    [HttpPut("calendar-settings")]
     [ProducesResponseType(typeof(CalendarSettingResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetById([FromBody] UpdateCalendarSettingsRequest dto)

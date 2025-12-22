@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
-        options.AddPolicy("AllowLocalNet3000",
+    options.AddPolicy("AllowLocalNet3000",
         policy => policy.WithOrigins("http://192.168.1.106:3000")
             .AllowAnyHeader()
             .AllowAnyMethod()

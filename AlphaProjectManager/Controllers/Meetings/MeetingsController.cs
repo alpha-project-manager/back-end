@@ -31,7 +31,7 @@ public class MeetingsController : ControllerBase
     [ProducesResponseType(typeof(BaseStatusResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CreateNewMeeting([FromRoute] Guid projectId, [FromBody] CreateMeetingRequest dto)
     {
-        var meetingInfo = await _meetingService.CreateNewMeeting(projectId, dto.DateTime, dto.TodoTasks);
+        var meetingInfo = await _meetingService.CreateNewMeeting(projectId, dto.DateTime, dto.Description, dto.ResultMark, dto.IsFinished, dto.TodoTasks.Select(t => (t.Title, t.Completed)).ToList());
         if (meetingInfo == null)
         {
             return SharedResponses.NotFoundObjectResponse<Project>(projectId);

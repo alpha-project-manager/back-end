@@ -26,7 +26,7 @@ public class MeetingService : BaseService<Meeting>
         _studentsInProjectService = studentsInProjectService;
     }
 
-    public async Task<FullMeetingInfo?> CreateNewMeeting(Guid projectId, DateTime dateTime, List<string> todoTasks)
+    public async Task<FullMeetingInfo?> CreateNewMeeting(Guid projectId, DateTime dateTime, string? description, int resultMark, bool isFinished, List<(string Title, bool Completed)> todoTasks)
     {
         var project = await _projectService.GetByIdOrDefaultAsync(projectId);
         if (project == null)
@@ -38,9 +38,9 @@ public class MeetingService : BaseService<Meeting>
         {
             Id = Guid.NewGuid(),
             ProjectId = projectId,
-            Description = "",
-            ResultMark = null,
-            IsFinished = false,
+            Description = description ?? "",
+            ResultMark = resultMark,
+            IsFinished = isFinished,
             DateTime = dateTime.ToUniversalTime()
         };
         await base.CreateAsync(meeting);
@@ -53,14 +53,14 @@ public class MeetingService : BaseService<Meeting>
             TutorAttendances = []
         };
 
-        foreach (var taskTitle in todoTasks)
+        foreach (var taskTemplate in todoTasks)
         {
             var task = new TodoTask
             {
                 Id = Guid.NewGuid(),
                 MeetingId = meeting.Id,
-                IsCompleted = false,
-                Title = taskTitle
+                IsCompleted = taskTemplate.Completed,
+                Title = taskTemplate.Title
             };
             await _tasksService.CreateAsync(task);
             result.TodoTasks.Add(task);
